@@ -24,7 +24,7 @@
 #define MADCTL_BGR 0x08
 #define MADCTL_MH  0x04
 
-typedef struct _screen_param_
+typedef struct
 {
     uint16_t width;        /*!< screen width */
     uint16_t height;       /*!< screen height */
@@ -34,7 +34,7 @@ typedef struct _screen_param_
     uint16_t textColor;
     uint16_t textBgColor;
     uint8_t  textSize;
-}StructScreenParam;
+}ScreenParam_t;
 
 /* MACRO SWAP */
 #define M_SWAP_int8_t(a, b)      { int8_t t = a; a = b; b = t; }
@@ -63,30 +63,30 @@ static void ILI9341_SetAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_
 
 
 /*** Local Variables **********************************************************/
-static SPI_InterfaceStruct* _hSpi = NULL;
-static StructScreenParam _screen_param = {0};
+static SPI_Interface_t* pSpi = NULL;
+static ScreenParam_t Param = {0};
 
 static uint8_t _buff[50] = {0}; /*!< Buffer for string convertion */
 
 /*** Define ILI9341 signal ****************************************************/
 static inline void cs_set(void)
 {
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
         
 static inline void cs_clear(void)
 {
-    _hSpi->CS(0);
+    pSpi->CS(0);
 }
 
 static inline void dc_command(void)
 {
-    _hSpi->DC(0);
+    pSpi->DC(0);
 }
 
 static inline void dc_data(void)
 {
-    _hSpi->DC(1);
+    pSpi->DC(1);
 }
 
 /*** API **********************************************************************/
@@ -100,7 +100,7 @@ static void ILI9341_Write32(uint32_t value)
     data[2] = (uint8_t)(value>>8);
     data[3] = (uint8_t)(value);
     
-    _hSpi->Write(data, 4);
+    pSpi->Write(data, 4);
 }
 
 static void ILI9341_Write16(uint16_t value)
@@ -111,16 +111,16 @@ static void ILI9341_Write16(uint16_t value)
     data[0] = (uint8_t)(value>>8);
     data[1] = (uint8_t)(value);
     
-    _hSpi->Write(data, 2);
+    pSpi->Write(data, 2);
 }
 
 /*** Functions ****************************************************************/
 
-void ILI9341_Initialize(SPI_InterfaceStruct* pSpi)
+void ILI9341_Initialize(SPI_Interface_t* p)
 {
-    if (pSpi == NULL) { return; }
+    if (p == NULL) { return; }
     
-    _hSpi = pSpi;
+    pSpi = p;
     
     ILI9341_InitScreen();
 }
@@ -128,15 +128,15 @@ void ILI9341_Initialize(SPI_InterfaceStruct* pSpi)
 
 static void ILI9341_WriteCommand(uint8_t value)
 {
-  _hSpi->DC(0);
-  _hSpi->CS(0);
-  _hSpi->Write((void*)&value, 1);
-  _hSpi->DC(1);
+  pSpi->DC(0);
+  pSpi->CS(0);
+  pSpi->Write((void*)&value, 1);
+  pSpi->DC(1);
 }
 
 static inline void ILI9341_WriteData(uint8_t value)
 {
-    _hSpi->Write((void*)&value, 1);
+    pSpi->Write((void*)&value, 1);
 }
 
 static void ILI9341_SetAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
@@ -160,21 +160,21 @@ static void ILI9341_SetAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_
 static void ILI9341_InitScreen(void)
 {
     /* Command signal */
-    _hSpi->DC(0);
+    pSpi->DC(0);
     
     /* Chip Select Idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
     
     /* Backlight ON */
-    _hSpi->Led(1);
+    pSpi->Led(1);
     
     /* LCD reset sequence */
-    _hSpi->Reset(1);
-    _hSpi->Delay(100);
-    _hSpi->Reset(0);
-    _hSpi->Delay(100);
-    _hSpi->Reset(1);
-    _hSpi->Delay(200);
+    pSpi->Reset(1);
+    pSpi->Delay(100);
+    pSpi->Reset(0);
+    pSpi->Delay(100);
+    pSpi->Reset(1);
+    pSpi->Delay(200);
     /* End reset */
     
     
@@ -282,49 +282,49 @@ static void ILI9341_InitScreen(void)
     ILI9341_WriteData(0x0F);
 
     ILI9341_WriteCommand(ILI9341_SLPOUT);    //Exit Sleep
-    _hSpi->Delay(120);
+    pSpi->Delay(120);
     ILI9341_WriteCommand(ILI9341_DISPON);    //Display on
-    _hSpi->Delay(120);
+    pSpi->Delay(120);
     
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
    
-    _screen_param.width  = ILI9341_GetWidth();
-    _screen_param.height = ILI9341_GetHeight();
+    Param.width  = ILI9341_GetWidth();
+    Param.height = ILI9341_GetHeight();
     
-    _screen_param.rotation = 0;
+    Param.rotation = 0;
 
 }
 
 void ILI9341_DrawPixel(int16_t x, int16_t y, uint16_t color)
 {
-    if ((x < 0) || (x >= _screen_param.width) || (y < 0) || (y >= _screen_param.height))
+    if ((x < 0) || (x >= Param.width) || (y < 0) || (y >= Param.height))
         return;
 
     ILI9341_SetAddrWindow(x, y, x + 1, y + 1);
     ILI9341_Write16(color);
     
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 void ILI9341_PushColor(uint16_t color)
 {
     /* CS start frame */
-    _hSpi->CS(0);
+    pSpi->CS(0);
 
     ILI9341_Write16(color);
 
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 void ILI9341_FillScreen(uint16_t color)
 {
     uint32_t nPixel;
 
-    ILI9341_SetAddrWindow(0, 0, _screen_param.width - 1, _screen_param.height - 1);
-    nPixel = (uint32_t)(_screen_param.width * _screen_param.height);
+    ILI9341_SetAddrWindow(0, 0, Param.width - 1, Param.height - 1);
+    nPixel = (uint32_t)(Param.width * Param.height);
     
     for(size_t i=0; i<nPixel; i++)
     {
@@ -332,7 +332,7 @@ void ILI9341_FillScreen(uint16_t color)
     }
 
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 
@@ -347,10 +347,10 @@ void ILI9341_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16
     int16_t len;
     
     /* only positive value -> limitation on max */
-    if (x0 >= _screen_param.width)  { x0 = _screen_param.width -1; }
-    if (y0 >= _screen_param.height) { y0 = _screen_param.height -1;}
-    if (x1 >= _screen_param.width)  { x1 = _screen_param.width -1; }
-    if (y1 >= _screen_param.height) { y1 = _screen_param.height -1;}
+    if (x0 >= Param.width)  { x0 = Param.width -1; }
+    if (y0 >= Param.height) { y0 = Param.height -1;}
+    if (x1 >= Param.width)  { x1 = Param.width -1; }
+    if (y1 >= Param.height) { y1 = Param.height -1;}
     
     /* it can be a pixel but not a line */
     //if ((x0==x1) && (y0==y1)) return;
@@ -481,8 +481,8 @@ void ILI9341_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16
 void ILI9341_DrawFastVLine(uint16_t x, uint16_t y, uint16_t h, uint16_t color)
 {
     /* only positive value -> limitation on max */
-    if (x >= _screen_param.width)  return;
-    if (y >= _screen_param.height) return;
+    if (x >= Param.width)  return;
+    if (y >= Param.height) return;
     if (h < 1) return;
 
     /* pixel size ? */
@@ -499,14 +499,14 @@ void ILI9341_DrawFastVLine(uint16_t x, uint16_t y, uint16_t h, uint16_t color)
     }
   
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 void ILI9341_DrawFastHLine(uint16_t x, uint16_t y, uint16_t w, uint16_t color)
 {
     /* only positive value -> limitation on max */
-    if (x >= _screen_param.width)  return;
-    if (y >= _screen_param.height) return;
+    if (x >= Param.width)  return;
+    if (y >= Param.height) return;
     if (w < 1) return;
     
     if (w < 2 ) 
@@ -522,7 +522,7 @@ void ILI9341_DrawFastHLine(uint16_t x, uint16_t y, uint16_t w, uint16_t color)
     }
 
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 // Pass 8-bit (each) R,G,B, get back 16-bit packed color
@@ -533,31 +533,31 @@ uint16_t ILI9341_Color565(uint8_t r, uint8_t g, uint8_t b)
 
 void ILI9341_SetRotation(uint8_t rotation)
 {
-    _screen_param.rotation = rotation % 4; // can't be higher than 3
-    switch (_screen_param.rotation)
+    Param.rotation = rotation % 4; // can't be higher than 3
+    switch (Param.rotation)
     {
         case 0:
             rotation = (MADCTL_MX | MADCTL_BGR);
-            _screen_param.width  = ILI9341_TFTWIDTH;
-            _screen_param.height = ILI9341_TFTHEIGHT;
+            Param.width  = ILI9341_TFTWIDTH;
+            Param.height = ILI9341_TFTHEIGHT;
             break;
             
         case 1:
             rotation = (MADCTL_MV | MADCTL_BGR);
-            _screen_param.width  = ILI9341_TFTHEIGHT;
-            _screen_param.height = ILI9341_TFTWIDTH;
+            Param.width  = ILI9341_TFTHEIGHT;
+            Param.height = ILI9341_TFTWIDTH;
             break;
             
         case 2:
             rotation = (MADCTL_MY | MADCTL_BGR);
-            _screen_param.width  = ILI9341_TFTWIDTH;
-            _screen_param.height = ILI9341_TFTHEIGHT;
+            Param.width  = ILI9341_TFTWIDTH;
+            Param.height = ILI9341_TFTHEIGHT;
             break;
             
         case 3:
             rotation = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
-            _screen_param.width  = ILI9341_TFTHEIGHT;
-            _screen_param.height = ILI9341_TFTWIDTH;
+            Param.width  = ILI9341_TFTHEIGHT;
+            Param.height = ILI9341_TFTWIDTH;
             break;
     }
   
@@ -565,7 +565,7 @@ void ILI9341_SetRotation(uint8_t rotation)
     ILI9341_WriteData(rotation);
 
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 void ILI9341_InvertDisplay(bool invert)
@@ -573,7 +573,7 @@ void ILI9341_InvertDisplay(bool invert)
     ILI9341_WriteCommand( invert ? ILI9341_INVON : ILI9341_INVOFF );
     
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 
@@ -678,9 +678,9 @@ void ILI9341_FillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color
     uint32_t nPixels;
     
     // rudimentary clipping (drawChar w/big text requires this)
-    if ((x >= _screen_param.width) || (y >= _screen_param.height || h < 1 || w < 1)) return;
-    if ((x + w - 1) >= _screen_param.width)  w = _screen_param.width  - x;
-    if ((y + h - 1) >= _screen_param.height) h = _screen_param.height - y;
+    if ((x >= Param.width) || (y >= Param.height || h < 1 || w < 1)) return;
+    if ((x + w - 1) >= Param.width)  w = Param.width  - x;
+    if ((y + h - 1) >= Param.height) h = Param.height - y;
     if (w == 1 && h == 1)
     {
         ILI9341_DrawPixel(x, y, color);
@@ -696,7 +696,7 @@ void ILI9341_FillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color
     }
 
     /* CS idle */
-    _hSpi->CS(1);
+    pSpi->CS(1);
 }
 
 void ILI9341_DrawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color)
@@ -775,20 +775,20 @@ void ILI9341_DrawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_
 
 void ILI9341_SetCursor(int16_t x, int16_t y) 
 {
-  _screen_param.cursorX = x;
-  _screen_param.cursorY = y;
+  Param.cursorX = x;
+  Param.cursorY = y;
 }
 
 void ILI9341_SetTextColor(uint16_t color) 
 {
   // For 'transparent' background, we'll set the bg 
   // to the same as fg instead of using a flag
-  _screen_param.textColor = _screen_param.textBgColor = color;
+  Param.textColor = Param.textBgColor = color;
 }
 
 void ILI9341_SetTextSize(uint8_t size)
 {
-  _screen_param.textSize = (size > 0) ? size : 1;
+  Param.textSize = (size > 0) ? size : 1;
 }
 
 // Draw a character
@@ -805,8 +805,8 @@ void ILI9341_DrawChar(  int16_t x,
 
     if (ILI9341_DrawPixel == NULL) return;
 
-    if( (x >= _screen_param.width)            || // Clip right
-        (y >= _screen_param.height)           || // Clip bottom
+    if( (x >= Param.width)            || // Clip right
+        (y >= Param.height)           || // Clip bottom
         ((x + 6 * size - 1) < 0) || // Clip left
         ((y + 8 * size - 1) < 0))   // Clip top
         return;
@@ -850,15 +850,15 @@ void ILI9341_Print(const uint8_t* outputText)
 {
     while(*outputText != '\0')
     {
-        ILI9341_DrawChar(   _screen_param.cursorX,
-                            _screen_param.cursorY,
+        ILI9341_DrawChar(   Param.cursorX,
+                            Param.cursorY,
                             *(outputText++),
-                            _screen_param.textColor,
-                            _screen_param.textBgColor,
-                            _screen_param.textSize);
+                            Param.textColor,
+                            Param.textBgColor,
+                            Param.textSize);
         
         /* width is 5, +1 for space. total = 6 */
-        _screen_param.cursorX += _screen_param.textSize *6;
+        Param.cursorX += Param.textSize *6;
     }
 }
 
@@ -867,8 +867,8 @@ void ILI9341_Println(const uint8_t* outputText)
     ILI9341_Print(outputText);
     
     /* CR */
-    _screen_param.cursorY += _screen_param.textSize *8; /*!< heigh is 7, +1 for space. total = 8 */
-    _screen_param.cursorX = 0;
+    Param.cursorY += Param.textSize *8; /*!< heigh is 7, +1 for space. total = 8 */
+    Param.cursorX = 0;
     
 }
 

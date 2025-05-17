@@ -85,7 +85,7 @@ void SPI1_Initialize()
      * SPI1CON2     
      */
     
-    uint32_t rdata = 0U;
+    uint32_t dummyData = 0U;
 
     /* Disable SPI1 Interrupts */
     IEC3CLR = 0x2000;
@@ -96,8 +96,8 @@ void SPI1_Initialize()
     SPI1CON = 0;
 
     /* Clear the Receiver buffer */
-    rdata = SPI1BUF;
-    rdata = rdata;
+    dummyData = SPI1BUF;
+    (void)dummyData;
 
     /* Clear SPI1 Interrupt flags */
     IFS3CLR = 0x2000;
@@ -152,12 +152,11 @@ void SPI1_Initialize()
     SPI1CON2bits.IGNROV = 1;// ignore overflow RX
     SPI1CON2bits.IGNTUR = 1;// ignore overflow TX
     
-    rdata = SPI1BUF;          /*!< Read rx buffer to reset flag FIFO */
-    (void)rdata;              /*!< dummy -> prevent warning at build */
+    dummyData = SPI1BUF;          /*!< Read rx buffer to reset flag FIFO */
+    (void)dummyData;              /*!< dummy -> prevent warning at build */
     
     /* Enable SPI1 */
-    SPI1CONbits.ON = 1;
-    
+    SPI1CONbits.ON = 1;    
 }
 
 /*
@@ -261,12 +260,15 @@ BOOL SPI1_Write(const void* const pBuffer, size_t size)
             SPI1BUF = ((uint8_t*)pBuffer)[count];
         }
         count++;
-        
+
+#define __READ_SO 0
+#if (__READ_SO == 1)
         /* If data is read, wait for the Receiver Data to become available */
-        //while((SPI1STAT & _SPI1STAT_SPIRBE_MASK) == _SPI1STAT_SPIRBE_MASK);
+        while((SPI1STAT & _SPI1STAT_SPIRBE_MASK) == _SPI1STAT_SPIRBE_MASK);
 
         /* We have data waiting in the SPI buffer */
-        //dummyData = SPI1BUF;
+        dummyData = SPI1BUF;
+#endif
     }
     
     /* Make sure no data is pending in the shift register */

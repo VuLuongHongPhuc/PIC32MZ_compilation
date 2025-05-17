@@ -53,7 +53,7 @@ extern "C" {
     void testRoundRects(void);
     void testFilledRoundRects(void);
 
-    void ILI9341_TEST_Sequence(uint8_t index);
+    void ILI9341_TEST_Sequence(void);
     void ILI9341_TEST_Screen(void);
     void ILI9341_TEST_Text(void);
     void ILI9341_TEST_FastLines(uint16_t color1, uint16_t color2);

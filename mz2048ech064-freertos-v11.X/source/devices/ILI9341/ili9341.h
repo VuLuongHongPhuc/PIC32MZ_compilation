@@ -116,10 +116,10 @@ typedef struct
     SPI_SetOutput Reset;
     SPI_SetOutput Led;
     SPI_Delay Delay;
-}SPI_InterfaceStruct;
+}SPI_Interface_t;
     
     
-void ILI9341_Initialize(SPI_InterfaceStruct* pSpi);
+void ILI9341_Initialize(SPI_Interface_t* p);
     
 /* Entry point for GFX */
 void ILI9341_DrawPixel(int16_t x, int16_t y, uint16_t color);

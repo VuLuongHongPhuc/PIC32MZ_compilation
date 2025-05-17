@@ -15,72 +15,12 @@
 #include <sys/kmem.h>  // KVA_TO_PA
 #include <proc/p32mz2048ech064.h>  // IPLxAUTO, IPLxSRS
 
-// *****************************************************************************
-/* CAN Message Object Type RX Attribute
 
-   Summary:
-    CAN Message RX Attribute for Data Frame and Remote Frame.
+#include "can2.h"
 
-   Description:
-    This data type defines CAN Message RX Attribute for Data Frame and Remote Frame.
 
-   Remarks:
-    None.
-*/
-typedef enum
-{
-    CAN_MSG_RX_DATA_FRAME = 0,
-    CAN_MSG_RX_REMOTE_FRAME
-} CAN_MSG_RX_ATTRIBUTE;
-
-// *****************************************************************************
-/* CAN RX Message
-
-   Summary:
-    CAN RX Message Buffer structure.
-
-   Description:
-    This data structure stores RX Message.
-
-   Remarks:
-    None.
-*/
-typedef struct
-{
-    /* Rx Message ID */
-    uint32_t *id;
-    /* Rx Message buffer */
-    uint8_t  *buffer;
-    /* Rx Message size */
-    uint8_t  *size;
-    /* Rx Message timestamp */
-    uint16_t *timestamp;
-    /* Rx Message attribute */
-    CAN_MSG_RX_ATTRIBUTE *msgAttr;
-} CAN_RX_MSG;
-
-/* CAN Message Buffer
-
-   Summary:
-    CAN Message Buffer structure.
-
-   Description:
-    This data structure defines the CAN TX and RX Message Buffer format.
-
-   Remarks:
-    None.
-*/
-typedef struct
-{
-    /* This is SID portion of the CAN message */
-    uint32_t msgSID;
-
-    /* This is EID portion of the CAN message */
-    uint32_t msgEID;
-
-    /* This is the data portion of the CAN message */
-    uint8_t msgData[8];
-} CAN_TX_RX_MSG_BUFFER;
+#define __EXTENDED_ID    1
+#define __LOOPBACK_MODE  0
 
 
 #define CAN_MESSAGE_RAM_TX_SIZE        8U   /* FIFO0 Max 32 */
@@ -88,16 +28,12 @@ typedef struct
 #define CAN_MESSAGE_RAM_CONFIG_SIZE    (CAN_MESSAGE_RAM_TX_SIZE+CAN_MESSAGE_RAM_RX_SIZE)
 
 
-
-
-/* Allocate a total of 64 words = TX + RX size. */
+/* Allocate TX + RX message buffer size. */
 static CAN_TX_RX_MSG_BUFFER __attribute__((coherent, aligned(32))) can_message_buffer[CAN_MESSAGE_RAM_CONFIG_SIZE];
 
-volatile static CAN_RX_MSG can2RxMsg;// message formatted
+static CAN_CALLBACK can2RxEventHandler = NULL;
+static uintptr_t can2RxContextHandler;
 
-
-void CAN2_Disable(void);
-void CAN2_Enable(void);
 
 
 
@@ -148,8 +84,7 @@ static inline void CAN2_ZeroInitialize(volatile void* pData, size_t dataSize)
  * @brief Configure CAN FIFOs
  */
 static inline void SetFIFO(void)
-{
-    
+{    
     /* Set Start address of MB0 in FIFO0 */
     C2FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
             
@@ -193,7 +128,7 @@ static inline void InitGPIO()
     /* PPS Output Remapping C2TX */
     RPB2R = 15;
 
-        /* Lock back the system after PPS configuration */
+    /* Lock back the system after PPS configuration */
     CFGCONbits.IOLOCK = 1U;
 
     SYSKEY = 0x00000000U;
@@ -205,6 +140,8 @@ static inline void SetInterrupt()
     //C2INTbits.CERRIE = 1; // CAN Bus Error Interrupt Enable bit
     //C2INTbits.SERRIE = 1; // System Error Interrupt Enable bit
     //C2INTSET = _C2INT_TBIE_MASK; /* Enable Transmit Buffer Interrupt */
+    C2INTSET = _C2INT_RBIE_MASK; /* Enable Receive Buffer Interrupt */
+    
     
     IPC38bits.CAN2IP = 2;  /* Interrupt priority */
     IPC38bits.CAN2IS = 0;  /* Interrupt sub-priority */
@@ -236,80 +173,192 @@ void CAN2_Initialize(void)
     SetFIFO();
     
     SetInterrupt();   
-    
+
+
+#if (__LOOPBACK_MODE == 1)
+    C2CONbits.REQOP = 2;
+    while(C2CONbits.OPMOD != 2);
+#else
     /* The CAN module can now be placed into normal mode if no further */
     /* configuration is required. */
-    C1CONbits.REQOP = 0;
-    while(C1CONbits.OPMOD != 0);
-    
+    C2CONbits.REQOP = 0;
+    while(C2CONbits.OPMOD != 0);
+#endif    
 }
 
 void CAN2_Enable(void)
 {
     C2CONbits.ON = 1;
-    // -> auto priority requested on C2TX/C2RX pins
+    /* Auto request priority on C2TX/C2RX pins */
 }
 
 void CAN2_Disable(void)
 {
     /* Place the CAN module in Configuration mode. */
-    C2CONbits.REQOP = 4;
-    while(C1CONbits.OPMOD != 4);
+    C2CONbits.REQOP = 4;         /* Request enter configuration mode */
+    while(C1CONbits.OPMOD != 4); /* Wait mode change */
     
     /* Switch the CAN module off. */
-    C2CONCLR = 0x00008000; /*Clear the ON bit */
-    while(C1CONbits.CANBUSY == 1);
+    C2CONCLR = 0x00008000;          /* Clear the ON bit */
+    while(C1CONbits.CANBUSY == 1);  /* Wait for CAN off - advisor */
     
-    // auto release on C2TX/C2RX pins?
+    /* - Auto release device control on C2TX/C2RX pins
+     * - Place CAN module into reset
+     * - All FIFO message is reset
+     */
 }
 
-void Read()
+/* @brief Reset Tx FIFO - Can also be done enter config mode or put module to off
+ */
+void CAN2_ResetTxFIFO(void)
 {
+    /* Reset CAN2 FIFO0 */
+    C2FIFOCON0SET = 0x00004000; /* Set the FRESET bit */
+    while(C2FIFOCON0bits.FRESET == 1);
+}
+
+/* @brief Reset Rx FIFO - Can also be done enter config mode or put module to off
+ */
+void CAN2_ResetRxFIFO(void)
+{
+    /* Reset CAN2 FIFO1 */
+    C2FIFOCON1SET = 0x00004000; /* Set the FRESET bit */
+    while(C2FIFOCON1bits.FRESET == 1);
+}
+
+
+uint8_t CAN2_Read(uint32_t *id, uint8_t *length, uint8_t *data, uint16_t *timestamp, CAN_MSG_RX_ATTRIBUTE *msgAttr)
+{
+    uint8_t  count = 0;
+    CAN_TX_RX_MSG_BUFFER *rxMessage = NULL; /* Points to message buffer to be written */
+    
+    /* if not empty */
+    if (!C1FIFOINT1bits.RXNEMPTYIF)
+    {
+        rxMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C2FIFOUA1);
+        
+        /* Check if it's a extended message type */
+        if ((rxMessage->msgEID & CAN_MSG_IDE_MASK) != 0U)
+        {
+            *id = ((rxMessage->msgSID & CAN_MSG_SID_MASK) << 18) | ((rxMessage->msgEID >> 10) & _C2RXM0_EID_MASK);
+            
+            /* Check if remote frame */
+            if ((rxMessage->msgEID & CAN_MSG_RTR_MASK) != 0U)
+            {
+                *msgAttr = CAN_MSG_RX_REMOTE_FRAME;
+            }
+            else
+            {
+                *msgAttr = CAN_MSG_RX_DATA_FRAME;
+            }
+        }
+        else
+        {
+            *id = rxMessage->msgSID & CAN_MSG_SID_MASK;
+            
+            /* Check if remote frame */
+            if ((rxMessage->msgEID & CAN_MSG_SRR_MASK) != 0U)
+            {
+                *msgAttr = CAN_MSG_RX_REMOTE_FRAME;
+            }
+            else
+            {
+                *msgAttr = CAN_MSG_RX_DATA_FRAME;
+            }
+        }
+
+        *length = (uint8_t)(rxMessage->msgEID & CAN_MSG_DLC_MASK);
+
+        /* Copy the data into the payload */
+        while (count < *length)
+        {
+            data[count] = rxMessage->msgData[count];
+            count++;
+        }
+
+        if (timestamp != NULL)
+        {
+            *timestamp = (uint16_t)((rxMessage->msgSID & CAN_MSG_TIMESTAMP_MASK) >> 16);
+        }
+        
+        /* Set the UINC bit to tell the CAN module that
+        * a message has been read. */
+        //C2FIFOCON1SET = 0x2000;
+        C2FIFOCON1SET = _C2FIFOCON1_UINC_MASK;
+        
+        return 1;
+    }
+    
     // CiFIFOUAn address register
     // CiFIFOCIn index register
+    
+    return 0;
 }
 
-#if 0 // TRANSMIT
-/* This code snippet illustrates the steps to load a transmit message FIFO. */
-/* This example uses the CAN1 module. */
-/* Four messages to be transmitted using transmit FIFO0 */
-int message; /* Tracks the message buffer */
-unsigned int * currentMessageBuffer; /* Points to message buffer to be written */
-message = 0;
-for(message = 0; message <= 3; message ++)
+uint8_t CAN2_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIBUTE msgAttr)
 {
-/* Get the address of the message buffer to write to from the C1FIFOUA0 */
-/* register. Convert this physical address to virtual address. */
-currentMessageBuffer = PA_TO_KVA1(C1FIF0UA0);
-/* This procedure will load the message
- * buffer with the message to be transmitted. */
-LoadMessageBuffer(currentMessageBuffer);
-C1FIFOCON0SET = 0x2008; /* Set the UINC and TXREQ bit */
-}
-/* At this point the messages are loaded in FIFO0 */
+    uint8_t count = 0;
+    CAN_TX_RX_MSG_BUFFER *txMessage = NULL; /* Points to message buffer to be written */
+    
+    /* Get the address of the message buffer to write to from the C1FIFOUA0 */
+    /* register. Convert this physical address to virtual address. */
+    txMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C2FIFOUA0);
+
+    if (C2FIFOINT0bits.TXNFULLIF == 0)
+    {
+#if (__EXTENDED_ID == 1)
+        txMessage->msgSID = (id & CAN_MSG_EID_MASK) >> 18;
+        txMessage->msgEID = ((id & 0x3FFFFUL) << 10) | CAN_MSG_IDE_MASK | CAN_MSG_SRR_MASK;
+#else
+        txMessage->msgSID = id;
+        txMessage->msgEID = 0U;
 #endif
+        
+        if (CAN_MSG_TX_REMOTE_FRAME == msgAttr)
+        {
+            txMessage->msgEID |= CAN_MSG_RTR_MASK;
+        }
+        else
+        {
+            if (length > 8U)
+            {
+                length = 8U;
+            }
+            txMessage->msgEID |= length;
+
+            while(count < length)
+            {
+                txMessage->msgData[count++] = *data++;
+            }
+        }
+
+        //C2FIFOCON0SET = 0x2008; /* Set the UINC and TXREQ bit */
+        C2FIFOCON0SET = _C2FIFOCON0_UINC_MASK | _C2FIFOCON0_TXREQ_MASK;
+        
+        return 1;
+    }
+    
+    return 0;
+}
 
 
-#if 0 // Receive from FIFO
-/* This code snippet illustrates the steps to read messages from receive */
-/* message FIFO. This example uses the CAN1 module.*/
-/* FIFO1 size is 4 messages and each message is 4 words long. */
-unsigned int * currentMessageBuffer; /* Points to message buffer to be read */
-while(1)
+
+
+
+/* @brief Sets the pointer to the function (and it's context) to be called when the
+    given CAN's receive transfer events occur.
+ * @param callback - callback function pointer
+ * @param contextHandle - loopback data pointer
+ */
+void CAN2_RxCallbackRegister(CAN_CALLBACK callback, uintptr_t contextHandle)
 {
-/* Keep reading until the FIFO is empty. */
-while(C1FIFOINT1bits.RXNEMPTYIF == 1)
-{
-/* Get the address of the message buffer to read from the C1FIFOUA1 */
-/* register. Convert this physical address to virtual address. */
-currentMessageBuffer = PA_TO_KVA1(C1FIF0UA1);
-ProcessReceivedMessage(currentMessageBuffer);
-/* Set the UINC bit to tell the CAN module that
- * a message has been read. */
-C1FIFOCON0SET = 0x2000;
+    if (callback != NULL)
+    {
+        can2RxEventHandler = callback;
+        can2RxContextHandler = contextHandle;
+    }
+    return;
 }
-}
-#endif
 
 // *****************************************************************************
 // *****************************************************************************
@@ -317,11 +366,23 @@ C1FIFOCON0SET = 0x2000;
 // *****************************************************************************
 // *****************************************************************************
 
-
-
 void __ISR(_CAN2_VECTOR, IPL2AUTO) CAN2_Handler (void)
 {
     
+    /* Receive buffer interrupt */
+    if (C2INTbits.RBIF)
+    {
+        // callback event function
+        if (NULL != can2RxEventHandler)
+        {
+            can2RxEventHandler(can2RxContextHandler);
+        }
+    }
+    
+    /* Transmit Buffer Interrupt */
+    if (C2INTbits.TBIF)
+    {
+    }
     
     //C2INTCLR = _C2INT_TBIE_MASK;
     IFS4CLR = _IFS4_CAN2IF_MASK;

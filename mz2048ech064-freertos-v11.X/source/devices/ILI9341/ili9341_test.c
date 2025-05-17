@@ -8,8 +8,10 @@
 #define MAX(a,b)        (((a) > (b)) ? (a) : (b))
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
 
-void ILI9341_TEST_Sequence(uint8_t index)
+void ILI9341_TEST_Sequence(void)
 {
+    static uint8_t index = 0;
+    
     switch(index)
     {
         case 0: ILI9341_TEST_Text(); break;
@@ -25,8 +27,10 @@ void ILI9341_TEST_Sequence(uint8_t index)
         case 11: ILI9341_TEST_RoundRects(); break;
         case 12: ILI9341_TEST_FilledRoundRects(); break;
         
-        default: break;
+        default: index = 0; break;
     }
+    
+    index ++;
 }
 
 void ILI9341_TEST_Text(void)

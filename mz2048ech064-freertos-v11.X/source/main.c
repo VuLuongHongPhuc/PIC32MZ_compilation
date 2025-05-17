@@ -181,13 +181,15 @@ int main(void)
                 1,
                 (TaskHandle_t*)NULL );
     
+#define DISPLAY_ILI9341 1
+#if (DISPLAY_ILI9341 == 1)    
     (void) xTaskCreate((TaskFunction_t) DISPLAY_Task,
                 "Display",
                 256,
-                ( void * ) 1,
+                NULL,
                 1,
-                (TaskHandle_t*)NULL
-            );
+                (TaskHandle_t*)NULL);
+#endif
     
     /* Start RTOS Scheduler. */
     

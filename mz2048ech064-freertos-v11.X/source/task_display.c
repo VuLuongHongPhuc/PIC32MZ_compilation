@@ -1,8 +1,4 @@
 
-
-
-//#include <stdbool.h>
-
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -17,7 +13,7 @@
 
 
 
-/*** SPI entries function *****************************************************/
+/*** SPI interface function *****************************************************/
 static inline void SPI_ChipSelectSignal(uint8_t state)
 {
     /* RD9 */
@@ -47,32 +43,26 @@ static inline void SPI_LEDSignal(uint8_t state)
 
 void DISPLAY_Task( void *pvParameters  )
 {
-    uint8_t index = 0;
-    SPI_InterfaceStruct driver = {
+    SPI_Interface_t driver = {
         .CS = &SPI_ChipSelectSignal,
         .Reset = &SPI_ResetSignal,
         .DC = &SPI_DCSignal,
         .Led = &SPI_LEDSignal,
         .Write = &SPI1_Write,
         .Delay = &vTaskDelay
-    }; 
+    };
     
     SPI1_Initialize();
     ILI9341_Initialize(&driver);
     
     /* fixe screen */
     //ILI9341_TEST_Text();
+
     while(1)
     {
-        // OK
-        
-        LED_2_Toggle();
-        
+        //LED_1_Toggle();
         vTaskDelay(1000U / portTICK_PERIOD_MS);
-        
-        if (index > 12) index = 0;
-        ILI9341_TEST_Sequence(index++);
-        
+        ILI9341_TEST_Sequence();
     }
 }
 

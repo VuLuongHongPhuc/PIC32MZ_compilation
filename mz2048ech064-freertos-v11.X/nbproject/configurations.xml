@@ -24,6 +24,8 @@
       <itemPath>source/hardwares/tim3.c</itemPath>
       <itemPath>source/hardwares/tim3.h</itemPath>
       <itemPath>source/hardwares/typedefs.h</itemPath>
+      <itemPath>source/hardwares/can_common.h</itemPath>
+      <itemPath>source/hardwares/can2.h</itemPath>
     </logicalFolder>
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
@@ -390,7 +392,7 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="1d000000-1d1fffff"/>
-        <property key="poweroptions.powerenable" value="false"/>
+        <property key="poweroptions.powerenable" value="true"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preservedataflash" value="false"/>
@@ -494,7 +496,7 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="1d000000-1d1fffff"/>
-        <property key="poweroptions.powerenable" value="false"/>
+        <property key="poweroptions.powerenable" value="true"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preservedataflash" value="false"/>
@@ -582,6 +584,12 @@
         </C32CPP>
         <C32Global>
         </C32Global>
+      </item>
+      <item path="source/hardwares/can2.c" ex="true" overriding="false">
+      </item>
+      <item path="source/hardwares/can2.h" ex="true" overriding="false">
+      </item>
+      <item path="source/hardwares/can_common.h" ex="true" overriding="false">
       </item>
     </conf>
   </confs>
