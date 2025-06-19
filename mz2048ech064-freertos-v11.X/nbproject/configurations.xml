@@ -26,6 +26,10 @@
       <itemPath>source/hardwares/typedefs.h</itemPath>
       <itemPath>source/hardwares/can_common.h</itemPath>
       <itemPath>source/hardwares/can2.h</itemPath>
+      <itemPath>source/hardwares/can1.c</itemPath>
+      <itemPath>source/hardwares/can1.h</itemPath>
+      <itemPath>source/hardwares/trng.h</itemPath>
+      <itemPath>source/hardwares/trng.c</itemPath>
     </logicalFolder>
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
@@ -42,6 +46,7 @@
         <itemPath>source/task_main.h</itemPath>
         <itemPath>source/task_statistic.h</itemPath>
         <itemPath>source/task_display.h</itemPath>
+        <itemPath>source/task_test.h</itemPath>
       </logicalFolder>
       <itemPath>source/main.h</itemPath>
     </logicalFolder>
@@ -117,6 +122,7 @@
         <itemPath>source/task_main.c</itemPath>
         <itemPath>source/task_statistic.c</itemPath>
         <itemPath>source/task_display.c</itemPath>
+        <itemPath>source/task_test.c</itemPath>
       </logicalFolder>
       <itemPath>source/main.c</itemPath>
     </logicalFolder>
@@ -134,11 +140,11 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>ICD3PlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
-        <languageToolchainVersion>4.60</languageToolchainVersion>
+        <languageToolchainVersion>4.35</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC32MZ-EC_DFP" vendor="Microchip" version="1.4.150"/>
+        <pack name="PIC32MZ-EC_DFP" vendor="Microchip" version="1.3.44"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>
@@ -481,6 +487,7 @@
         <property key="event.recorder.debugger.behavior" value="Running"/>
         <property key="event.recorder.enabled" value="false"/>
         <property key="event.recorder.scvd.files" value=""/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="lastid" value=""/>
         <property key="memories.aux" value="false"/>
@@ -584,12 +591,6 @@
         </C32CPP>
         <C32Global>
         </C32Global>
-      </item>
-      <item path="source/hardwares/can2.c" ex="true" overriding="false">
-      </item>
-      <item path="source/hardwares/can2.h" ex="true" overriding="false">
-      </item>
-      <item path="source/hardwares/can_common.h" ex="true" overriding="false">
       </item>
     </conf>
   </confs>

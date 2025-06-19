@@ -27,8 +27,9 @@
 #include "task_main.h"
 #include "gpio.h"
 
-//#include "can2.h"
-//#include "can_common.h"
+
+/*** Constant *****************************************************************/
+const uint32_t DEF_DELAY_MAIN_TASK = 1000U / portTICK_PERIOD_MS;
 
 /*** Variables ****************************************************************/
 TaskHandle_t xTask_Main;
@@ -37,47 +38,16 @@ TaskHandle_t xTask_Main;
 /*** Prototypes ************************************************************* */
 
 
-/*
-void CAN2_RxEventHandler(uintptr_t context)
-{
-    (void)context;
-    
-    uint32_t id;
-    uint8_t length = 0;
-    uint8_t data[8] = {0};
-    //uint16_t *timestamp;
-    CAN_MSG_RX_ATTRIBUTE msgAttr = CAN_MSG_RX_REMOTE_FRAME;
-    
-    (void)CAN2_Read(&id, &length, data, NULL, &msgAttr);
-    if (msgAttr == CAN_MSG_RX_DATA_FRAME)
-    {
-        data[7] = 2;
-    }
-}
-*/
-
-
 void MAIN_Task( void *pvParameters  )
-{
-    /*
-    uint32_t id = 0x01023;
-    uint8_t length = 2;
-    uint8_t data[8] = {0x31, 0x33, 2, 3, 4, 5, 6};
-    CAN_MSG_TX_ATTRIBUTE msgAttr = CAN_MSG_RX_DATA_FRAME;
-    */
-    //CAN2_Initialize();
-    //CAN2_RxCallbackRegister(CAN2_RxEventHandler, (uintptr_t) NULL);
-
+{   
+    configASSERT( ( uint32_t ) pvParameters == 1UL );
+    
     while(true)
     {
-        // OK
-
-        LED_2_Toggle();
+        LED_3_Toggle();
         //RB10_Toggle();
 
-        vTaskDelay(1000U / portTICK_PERIOD_MS);
-        
-        //(void)CAN2_Write(id, length, data, msgAttr);
+        vTaskDelay(DEF_DELAY_MAIN_TASK);
     }
 }
 

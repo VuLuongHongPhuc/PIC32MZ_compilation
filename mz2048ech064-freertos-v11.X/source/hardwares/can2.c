@@ -8,6 +8,8 @@
  * FIFO 0 : Transmit 8 deep level -> 8x 4 words = 32 bytes
  * FIFO 1 : Receive  8 deep level -> 8x 4 words = 32 bytes
  * Interrupt mode
+ * 
+ * NOTE: blocked at change mode Configration mode to other mode
  */
 
 #include "xc.h"
@@ -83,7 +85,7 @@ static inline void CAN2_ZeroInitialize(volatile void* pData, size_t dataSize)
 /**
  * @brief Configure CAN FIFOs
  */
-static inline void SetFIFO(void)
+static void SetFIFO(void)
 {    
     /* Set Start address of MB0 in FIFO0 */
     C2FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
@@ -98,22 +100,28 @@ static inline void SetFIFO(void)
     C2FIFOCON1bits.FSIZE = CAN_MESSAGE_RAM_RX_SIZE - 1U;
 }
 
-static inline void SetAcceptanceFilter(void)
+static void SetAcceptanceFilter(void)
 {
+    C2FLTCON0bits.FLTEN0 = 1; /* Enable filter 0*/
+    
     /* Configure CAN Filters */
-    //C2RXF0bits.SID = 0;
-    //C2RXF0bits.EXID = 0;
-    //C2RXF0bits.EID = 0;
+    C2RXF0bits.SID = 0;
+    C2RXF0bits.EXID = 0;
+    C2RXF0bits.EID = 0;
+    
+    C2CONbits.DNCNT = 0; /* Do not compare data bytes */
     
     C2FLTCON0bits.FSEL0 = 1; // 1 = Message matching filter is stored in FIFO buffer 1
     
     /* Configure CAN Acceptance Filter Masks */
-    C2RXM0bits.SID = 0x7FFu;
-    C2RXM0bits.MIDE = 0x01u;
-    C2RXM0bits.EID = 0x3FFFFu;
+    C2RXM0bits.SID = 0; 
+    C2RXM0bits.MIDE = 0;
+    C2RXM0bits.EID = 0;
+    //C2RXM0 = 0x3FFFFu | (0x01u << _C2RXM0_MIDE_POSITION) | (0x7FFu << _C2RXM0_SID_POSITION) /* mask 0x1FFFFFFF */
+    //C2RXM0 = (0x1FFFFFFFUL & _C2RXM0_EID_MASK) | (((0x1FFFFFFFU & 0x1FFC0000u) >> 18u) << _C2RXM0_SID_POSITION) | _C2RXM0_MIDE_MASK;
 }
 
-static inline void InitGPIO()
+static void InitGPIO()
 {
     /* Unlock system for PPS configuration */
     SYSKEY = 0x00000000U;
@@ -134,7 +142,7 @@ static inline void InitGPIO()
     SYSKEY = 0x00000000U;
 }
 
-static inline void SetInterrupt()
+static void SetInterrupt()
 {
     C2INTbits.IVRIE = 1;  // Invalid Message Received Interrupt Enable bit
     //C2INTbits.CERRIE = 1; // CAN Bus Error Interrupt Enable bit
@@ -159,31 +167,46 @@ void CAN2_Initialize(void)
      * C2FIFOCONn<12> - DONLY
      */
     
+    (void)__builtin_disable_interrupts();
+    
     /* Remap GPIO */
     InitGPIO();
     
-    /* At reset, normally on config mode */
-    if (C2CONbits.OPMOD != 4)
+    /* Switch the CAN module ON */
+    C2CONSET = _C2CON_ON_MASK;
+    
+    /* At reset, normally on configuration mode */
+    /* Switch the CAN module to Configuration mode. Wait until the switch is complete */
+    C2CONbits.REQOP = CAN_CONFIGURATION_MODE;
+    while (C2CONbits.OPMOD != CAN_CONFIGURATION_MODE)
     {
-        CAN2_Disable();
+        /* Do nothing - wait */
     }
     
     SetBaudrate();
-    
     SetFIFO();
-    
     SetInterrupt();   
 
-
 #if (__LOOPBACK_MODE == 1)
-    C2CONbits.REQOP = 2;
-    while(C2CONbits.OPMOD != 2);
+    C2CONbits.REQOP = CAN_LOOPBACK_MODE;
+    while(C2CONbits.OPMOD != CAN_LOOPBACK_MODE)
+    {
+        /* Do Nothing */
+    }
 #else
     /* The CAN module can now be placed into normal mode if no further */
-    /* configuration is required. */
-    C2CONbits.REQOP = 0;
-    while(C2CONbits.OPMOD != 0);
-#endif    
+    //C2CONbits.REQOP = CAN_OPERATION_MODE;
+    //while(C2CONbits.OPMOD != CAN_OPERATION_MODE)    { /* Do Nothing - wait */ }
+    
+    /* Switch the CAN module to CAN_OPERATION_MODE. Wait until the switch is complete */
+    C2CON = (C2CON & ~_C2CON_REQOP_MASK) | ((CAN_OPERATION_MODE << _C2CON_REQOP_POSITION) & _C2CON_REQOP_MASK);
+    while(((C2CON & _C2CON_OPMOD_MASK) >> _C2CON_OPMOD_POSITION) != CAN_OPERATION_MODE)
+    {
+        /* Do Nothing */
+    }
+#endif
+    
+    (void)__builtin_enable_interrupts();
 }
 
 void CAN2_Enable(void)
@@ -196,11 +219,11 @@ void CAN2_Disable(void)
 {
     /* Place the CAN module in Configuration mode. */
     C2CONbits.REQOP = 4;         /* Request enter configuration mode */
-    while(C1CONbits.OPMOD != 4); /* Wait mode change */
+    while(C2CONbits.OPMOD != 4); /* Wait mode change */
     
     /* Switch the CAN module off. */
     C2CONCLR = 0x00008000;          /* Clear the ON bit */
-    while(C1CONbits.CANBUSY == 1);  /* Wait for CAN off - advisor */
+    while(C2CONbits.CANBUSY == 1);  /* Wait for CAN off - advisor */
     
     /* - Auto release device control on C2TX/C2RX pins
      * - Place CAN module into reset
@@ -233,7 +256,7 @@ uint8_t CAN2_Read(uint32_t *id, uint8_t *length, uint8_t *data, uint16_t *timest
     CAN_TX_RX_MSG_BUFFER *rxMessage = NULL; /* Points to message buffer to be written */
     
     /* if not empty */
-    if (!C1FIFOINT1bits.RXNEMPTYIF)
+    if (!C2FIFOINT1bits.RXNEMPTYIF)
     {
         rxMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C2FIFOUA1);
         

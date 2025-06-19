@@ -10,7 +10,7 @@
 #include "system.h"
 #include "xc.h"
 //#include <p32xxxx.h>
-
+#include "can1.h"
 
 /* ************************************************************************** */
 /* ************************************************************************** */
@@ -34,11 +34,62 @@ void SYS_Clock(void);
 /* ************************************************************************** */
 /* ************************************************************************** */
 
+static inline void SYS_INT_Enable(void)
+{
+    //__builtin_mtc0(12, 0,(__builtin_mfc0(12, 0) | 0x0001));
+    // doit avoir IE=1 EXL=0 ERL=0 DM=0 pour que l'interrupt soit actif
+    __builtin_mtc0(_CP0_STATUS, _CP0_STATUS_SELECT,(__builtin_mfc0(_CP0_STATUS, _CP0_STATUS_SELECT) | 0x0001));
+}
+
+static inline void SYS_INT_Disable(void)
+{
+    __builtin_mtc0(_CP0_STATUS, _CP0_STATUS_SELECT,(__builtin_mfc0(_CP0_STATUS, _CP0_STATUS_SELECT) & 0xFFFFFFFE));
+}
+
+
+static void SYS_DEVCON_SystemUnlock ( )
+{
+    uint32_t int_flag = 0;
+
+    int_flag = (uint32_t)__builtin_disable_interrupts();
+
+    /* System unlock */
+    SYSKEY = 0x00000000;
+	SYSKEY = 0xAA996655;
+	SYSKEY = 0x556699AA;
+
+    if (int_flag)
+    {
+        SYS_INT_Enable();
+    }
+}
+
+static void SYS_DEVCON_SystemLock (void)
+{
+    uint32_t int_flag = 0;
+   
+    int_flag = (uint32_t)__builtin_disable_interrupts();
+
+    /* System lock */
+    SYSKEY = 0x33333333;
+
+    if (int_flag)
+    {
+        /* Enable interrupt */
+        __builtin_mtc0(12, 0,(__builtin_mfc0(12, 0) | 0x0001));
+    }
+}
+
+static void initGPIO(void)
+{
+    CAN1_RemapPPS();
+}
+
 void SYS_Initialize(void)
 {
     /* Interrupts must be disabled when enabling the Prefetch Cache Module */
-    // ---> disable IT
-    __builtin_mtc0(_CP0_STATUS, _CP0_STATUS_SELECT,(__builtin_mfc0(_CP0_STATUS, _CP0_STATUS_SELECT) & 0xFFFFFFFE));
+    SYS_INT_Disable();
+    
     
     SYS_Clock();
     
@@ -61,16 +112,25 @@ void SYS_Initialize(void)
     
     // Interrupt Proximity Timer Control bits
     //INTCONbits.TPC = 0; //default disable
-
     
-    // ---> enable IT
-    // doit avoir IE=1 EXL=0 ERL=0 DM=0 pour que l'interrupt soit actif
-    __builtin_mtc0(_CP0_STATUS, _CP0_STATUS_SELECT,(__builtin_mfc0(_CP0_STATUS, _CP0_STATUS_SELECT) | 0x0001));
+    CAN1_Initialize();
+    
+    
+    /*** GPIO remap PPS ***/
+    initGPIO();
+    
+    
+    
+    SYS_INT_Enable();
 }
 
 
 void SYS_Clock(void)
 {
+    SYS_DEVCON_SystemUnlock ( );
+    
+    OSCCONbits.FRCDIV = 0;//OSC_FRC_DIV_1;
+    
     /* PBxDIV : PERIPHERAL BUS ?x? CLOCK DIVISOR CONTROL REGISTER */
     
     /* PBCLK1: OSC2 */
@@ -120,6 +180,22 @@ void SYS_Clock(void)
         while(PB8DIVbits.PBDIVRDY == 0);
         PB8DIVbits.PBDIV = 1;              /*!< PBCLK8 is SYSCLK divided by 2 (default value=1)*/
     }
+    
+    
+    
+    REFO1CONbits.ON = 0; /* Disable REFCLKO1*/
+    REFO1CONbits.OE = 0; /* Disable REFCLK1_OE*/
+    
+    REFO2CONbits.ON = 0; /* Disable REFCLKO2*/
+    REFO2CONbits.OE = 0; /* Disable REFCLK2_OE*/
+    
+    REFO3CONbits.ON = 0; /* Disable REFCLKO3*/
+    REFO3CONbits.OE = 0; /* Disable REFCLK3_OE*/
+    
+    REFO4CONbits.ON = 0; /* Disable REFCLKO4*/
+    REFO4CONbits.OE = 0; /* Disable REFCLK4_OE*/
+    
+    SYS_DEVCON_SystemLock ( );
 }
 
 

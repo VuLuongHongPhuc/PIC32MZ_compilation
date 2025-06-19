@@ -120,6 +120,7 @@
 #include "task_main.h"
 #include "task_statistic.h"
 #include "task_display.h"
+#include "task_test.h"
 
 
 /* Variables ********************************************************/
@@ -181,7 +182,15 @@ int main(void)
                 1,
                 (TaskHandle_t*)NULL );
     
-#define DISPLAY_ILI9341 1
+    (void) xTaskCreate((TaskFunction_t) TEST_Task,
+                "TestApps",
+                512,
+                NULL,
+                1,
+                (TaskHandle_t*)NULL );
+    
+    
+#define DISPLAY_ILI9341 0
 #if (DISPLAY_ILI9341 == 1)    
     (void) xTaskCreate((TaskFunction_t) DISPLAY_Task,
                 "Display",

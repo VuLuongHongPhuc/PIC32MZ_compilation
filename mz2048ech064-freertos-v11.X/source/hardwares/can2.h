@@ -15,8 +15,8 @@
  */
 /* ************************************************************************** */
 
-#ifndef _CAN2_H    /* Guard against multiple inclusion */
-#define _CAN2_H
+#ifndef _M_CAN2_H    /* Guard against multiple inclusion */
+#define _M_CAN2_H
 
 
 /*** Includes *****************************************************************/
@@ -43,7 +43,7 @@ void CAN2_RxCallbackRegister(CAN_CALLBACK callback, uintptr_t contextHandle);
 }
 #endif
 
-#endif /* _CAN2_H */
+#endif /* _M_CAN2_H */
 
 /* *****************************************************************************
  End of File
