@@ -1,0 +1,7 @@
+
+# ignore file and folder
+.generated_files
+build/
+debug/
+dist/
+MZ_usbcdc.mc3.bak*

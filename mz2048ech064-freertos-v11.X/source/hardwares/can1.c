@@ -1,0 +1,403 @@
+/* CAN1
+ * pin.6  C1TX  RG8
+ * pin.5  C1RX  RG7
+ * Bit rate : 500 Kbps
+ * sample at 87.5%
+ * Baudrate prescaler : 4
+ * propagation segment time (ns) : 800
+ * FIFO 0 : Transmit 8 deep level
+ * FIFO 1 : Receive  8 deep level
+ * Interrupt mode
+ * 
+ * NOTE: 
+ *  - Blocked at change mode Configration mode to other mode if Transceiver 
+ *    CAN not connected
+ */
+
+#include "xc.h"
+#include <sys/attribs.h>
+#include <sys/kmem.h>  // KVA_TO_PA
+#include <proc/p32mz2048ech064.h>  // IPLxAUTO, IPLxSRS
+
+#include "can1.h"
+
+
+#define CAN_FIFO_OFFSET              (0x10U)
+
+#define __EXTENDED_ID    1
+#define __LOOPBACK_MODE  0
+
+
+#define CAN_MESSAGE_RAM_TX_SIZE        8U   /* FIFO0 Max 32 */
+#define CAN_MESSAGE_RAM_RX_SIZE        8U   /* FIFO1 max 32 */
+#define CAN_MESSAGE_RAM_CONFIG_SIZE    (CAN_MESSAGE_RAM_TX_SIZE+CAN_MESSAGE_RAM_RX_SIZE)
+
+
+/* Allocate TX + RX message buffer size. */
+static CAN_TX_RX_MSG_BUFFER __attribute__((coherent, aligned(32))) can_message_buffer[CAN_MESSAGE_RAM_CONFIG_SIZE];
+
+static CAN_CALLBACK can1RxEventHandler = NULL;
+static uintptr_t can1RxContextHandler;
+
+
+static void SetBaudrate(void)
+{
+#if 0
+    C1CFGbits.BRP = 4;   // (BRP + 1)
+    C1CFGbits.SJW = 1;   // SJW <= SEG2PH
+
+    C1CFGbits.PRSEG = 0;  // PropSeg = PRSEG + 1 = n TQ
+    C1CFGbits.SEG1PH = 5; // PhaseSeg1 = SEG1PH + 1 = n TQ
+    C1CFGbits.SEG2PH = 1; // PhaseSeg2 = SEG2PH + 1 = n TQ
+    C1CFGbits.SAM = 0;    // 1 sample per bit
+    
+    C2CFGbits.SEG2PHTS = 1;
+    // WAKFIL = 0
+#endif
+    
+    C1CFG = 0x00008604;
+    //C2CFGbits.SEG2PHTS = 1;
+}
+
+/**
+ * @brief Configure CAN FIFOs
+ */
+static void SetFIFO(void)
+{    
+    /* Set Start address of MB0 in FIFO0 */
+    C1FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
+            
+    /* Set Transmit FIFO size 8 */
+    C1FIFOCON0bits.TXPRI = 0;
+    C1FIFOCON0bits.TXEN = 1;
+    C1FIFOCON0bits.FSIZE = CAN_MESSAGE_RAM_TX_SIZE - 1U;
+        
+    /* Set FIFO1 Full Receive Message size 8*/
+    C1FIFOCON1bits.TXPRI = 0;
+    C1FIFOCON1bits.TXEN = 0;
+    C1FIFOCON1bits.FSIZE = CAN_MESSAGE_RAM_RX_SIZE - 1U;
+}
+
+static void SetAcceptanceFilter(void)
+{
+    /* filter/mask acceptance */
+    C1RXF0 = 0;
+    
+    /*
+     * FLTEN0: Filter 0 Enable
+     * MSEL0<1:0>: 00 = Acceptance Mask 0 selected
+     * FSEL0<4:0>: 00001 = Message matching filter is stored in FIFO buffer 1 
+     */
+    //C1FLTCON0 = (1U<<CAN_CiFLTCONx_FLTEN0_pos) | (1U<<CAN_CiFLTCONx_FSEL0_pos);
+    C1FLTCON0 = 0x81;
+    //C1FLTCON0bits.FLTEN0 = 1;
+    //C1FLTCON0bits.FSEL0 = 1;
+    
+    /* filter/mask acceptance */    
+    C1RXM0 = 0;
+    
+    /* Do not compare data bytes */
+    //C1CONbits.DNCNT = 0; 
+}
+
+void CAN1_RemapPPS(void)
+{
+    /* Unlock Peripheral Pin. Writes to PPS registers are allowed */
+    //CFGCONbits.IOLOCK = 0U;
+
+    /* PPS Remapping */
+    C1RXR = 0b0001;   /* pin.5  input  RPG7  RG7 */
+    RPG8R = 0b1111;   /* pin.6  output C1TX  RG8 */
+
+    /* Lock Peripheral Pin. Writes to PPS registers are not allowed */
+    //CFGCONbits.IOLOCK = 1U;
+}
+
+
+static void SetInterrupt()
+{
+    C1INTbits.IVRIE = 1;  // Invalid Message Received Interrupt Enable bit
+    //C1INTbits.CERRIE = 1; // CAN Bus Error Interrupt Enable bit
+    //C1INTbits.SERRIE = 1; // System Error Interrupt Enable bit
+    //C1INTSET = _C1INT_TBIE_MASK; /* Enable Transmit Buffer Interrupt */
+    C1INTSET = _C1INT_RBIE_MASK; /* Enable Receive Buffer Interrupt */
+    
+    IPC37bits.CAN1IP = 2;  /* Interrupt priority */
+    IPC37bits.CAN1IS = 1;  /* Interrupt sub-priority */
+    
+    IEC4SET = _IEC4_CAN1IE_MASK; /* Enable CAN2 interrupt vector */
+}
+
+
+void CAN1_Initialize(void)
+{
+    
+    /* !! The module must be in configuration mode C2CON<23:21> = 100 to configure
+     * !! Configuration order is mandatory
+     * C1CFG
+     * C1FIFOBA
+     * C1RXMn
+     * C1FIFOCONn<20:16> - FSIZE<4:0>
+     * C1FIFOCONn<12> - DONLY
+     */
+
+#if __IN_SYSTEM_INIT__    
+    volatile uint32_t int_status;
+
+    // Disable global interrupt
+    int_status = __builtin_get_isr_state();
+    __builtin_disable_interrupts();
+    
+    volatile uint32_t dma_suspend;
+    // Suspend DMA
+    dma_suspend = DMACONbits.SUSPEND;
+    if (dma_suspend == 0)
+    {
+        DMACONSET = _DMACON_SUSPEND_MASK;
+        while (DMACONbits.DMABUSY == 1);
+    }
+#endif
+    
+
+    
+    /* Switch the CAN module ON */
+    C1CONSET = _C1CON_ON_MASK;
+    //CAN1_Enable();
+    
+    /* At reset, normally on configuration mode */
+    /* Switch the CAN module to Configuration mode. Wait until the switch is complete */
+    C1CONbits.REQOP = CAN_CONFIGURATION_MODE;
+    while (C1CONbits.OPMOD != CAN_CONFIGURATION_MODE)
+    {        
+    }
+    
+    SetBaudrate();
+    SetFIFO();
+    SetAcceptanceFilter();
+    //SetInterrupt();
+    
+    
+#if (__LOOPBACK_MODE == 1)
+    C1CONbits.REQOP = CAN_LOOPBACK_MODE;
+    //while(C1CONbits.OPMOD != CAN_LOOPBACK_MODE)    { /* Do Nothing - wait */ }
+#else
+
+    /* The CAN module can now be placed into normal mode if no further */
+    C1CONbits.REQOP = CAN_OPERATION_MODE;
+    while(C1CONbits.OPMOD != CAN_OPERATION_MODE)
+    {        
+    }
+#endif
+
+
+#if __IN_SYSTEM_INIT__
+    if(dma_suspend == 0)
+    {
+        DMACONCLR = _DMACON_SUSPEND_MASK;
+    }
+    __builtin_set_isr_state(int_status);
+#endif
+    
+}
+
+void CAN1_Enable(void)
+{
+    /* Switch the CAN module ON */
+    C1CONSET = _C1CON_ON_MASK;
+    /* Auto request priority on C2TX/C2RX pins */
+}
+
+void CAN1_Disable(void)
+{
+    /* Place the CAN module in Configuration mode. */
+    C1CONbits.REQOP = 4;         /* Request enter configuration mode */
+    while(C1CONbits.OPMOD != 4); /* Wait mode change */
+    
+    /* Switch the CAN module off. */
+    C2CONCLR = 0x00008000;          /* Clear the ON bit */
+    while(C1CONbits.CANBUSY == 1);  /* Wait for CAN off - advisor */
+    
+    /* - Auto release device control on C2TX/C2RX pins
+     * - Place CAN module into reset
+     * - All FIFO message is reset
+     */
+}
+
+/* @brief Reset Tx FIFO - Can also be done enter config mode or put module to off
+ */
+void CAN1_ResetTxFIFO(void)
+{
+    /* Reset CAN2 FIFO0 */
+    C1FIFOCON0SET = 0x00004000; /* Set the FRESET bit */
+    while(C1FIFOCON0bits.FRESET == 1);
+}
+
+/* @brief Reset Rx FIFO - Can also be done enter config mode or put module to off
+ */
+void CAN1_ResetRxFIFO(void)
+{
+    /* Reset CAN2 FIFO1 */
+    C1FIFOCON1SET = 0x00004000; /* Set the FRESET bit */
+    while(C1FIFOCON1bits.FRESET == 1);
+}
+
+uint8_t CAN1_Read(uint32_t *id, uint8_t *length, uint8_t *data, uint16_t *timestamp, CAN_MSG_RX_ATTRIBUTE *msgAttr)
+{
+    uint8_t  count = 0;
+    CAN_TX_RX_MSG_BUFFER *rxMessage = NULL; /* Points to message buffer to be written */
+    
+    /* if not empty */
+    if (!C1FIFOINT1bits.RXNEMPTYIF)
+    {
+        rxMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C1FIFOUA1);
+        
+        /* Check if it's a extended message type */
+        if ((rxMessage->msgEID & CAN_MSG_IDE_MASK) != 0U)
+        {
+            *id = ((rxMessage->msgSID & CAN_MSG_SID_MASK) << 18) | ((rxMessage->msgEID >> 10) & _C2RXM0_EID_MASK);
+            
+            /* Check if remote frame */
+            if ((rxMessage->msgEID & CAN_MSG_RTR_MASK) != 0U)
+            {
+                *msgAttr = CAN_MSG_RX_REMOTE_FRAME;
+            }
+            else
+            {
+                *msgAttr = CAN_MSG_RX_DATA_FRAME;
+            }
+        }
+        else
+        {
+            *id = rxMessage->msgSID & CAN_MSG_SID_MASK;
+            
+            /* Check if remote frame */
+            if ((rxMessage->msgEID & CAN_MSG_SRR_MASK) != 0U)
+            {
+                *msgAttr = CAN_MSG_RX_REMOTE_FRAME;
+            }
+            else
+            {
+                *msgAttr = CAN_MSG_RX_DATA_FRAME;
+            }
+        }
+
+        *length = (uint8_t)(rxMessage->msgEID & CAN_MSG_DLC_MASK);
+
+        /* Copy the data into the payload */
+        while (count < *length)
+        {
+            data[count] = rxMessage->msgData[count];
+            count++;
+        }
+
+        if (timestamp != NULL)
+        {
+            *timestamp = (uint16_t)((rxMessage->msgSID & CAN_MSG_TIMESTAMP_MASK) >> 16);
+        }
+        
+        /* Set the UINC bit to tell the CAN module that a message has been read. */        
+        C1FIFOCON1SET = _C1FIFOCON1_UINC_MASK;
+        
+        return 1;
+    }
+    
+    // CiFIFOUAn address register
+    // CiFIFOCIn index register
+    
+    return 0;
+}
+
+uint8_t CAN1_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIBUTE msgAttr)
+{
+    uint8_t i;
+    CAN_TX_RX_MSG_BUFFER *txMessage = NULL; /* Points to message buffer to be written */
+    
+    /* Get the address of the message buffer to write to from the C1FIFOUA0 */
+    /* register. Convert this physical address to virtual address. */
+    txMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C1FIFOUA0);
+
+    if (C1FIFOINT0bits.TXNFULLIF)
+    {
+#if (__EXTENDED_ID == 1)
+        txMessage->msgSID = (id & CAN_MSG_EID_MASK) >> 18;
+        txMessage->msgEID = ((id & 0x3FFFFUL) << 10) | CAN_MSG_IDE_MASK | CAN_MSG_SRR_MASK;
+#else
+        txMessage->msgSID = id;
+        txMessage->msgEID = 0U;
+#endif
+        
+        if (CAN_MSG_TX_REMOTE_FRAME == msgAttr)
+        {
+            txMessage->msgEID |= CAN_MSG_RTR_MASK;
+        }
+        else
+        {
+            if (length > 8U)
+            {
+                length = 8U;
+            }
+            
+            txMessage->msgEID |= length;
+
+            /* Fixe n copy */
+            for (i=0; i<8; i++)
+            {
+                txMessage->msgData[i] = data[i];
+            }
+        }
+
+        /* Set the UINC and TXREQ bit */
+        C1FIFOCON0SET = _C1FIFOCON0_UINC_MASK;
+        C1FIFOCON0SET = _C1FIFOCON0_TXREQ_MASK;
+        
+        return 1;
+    }
+    
+    return 0;
+}
+
+/* @brief Sets the pointer to the function (and it's context) to be called when the
+    given CAN's receive transfer events occur.
+ * @param callback - callback function pointer
+ * @param contextHandle - loopback data pointer
+ */
+void CAN1_RxCallbackRegister(CAN_CALLBACK callback, uintptr_t contextHandle)
+{
+    if (callback != NULL)
+    {
+        can1RxEventHandler = callback;
+        can1RxContextHandler = contextHandle;
+    }
+    return;
+}
+
+// *****************************************************************************
+// *****************************************************************************
+// Section: System Interrupt Vector definitions
+// *****************************************************************************
+// *****************************************************************************
+void __ISR(_CAN1_VECTOR, IPL2AUTO) CAN1_Handler (void)
+{
+    
+    /* Receive buffer interrupt */
+    if (C1INTbits.RBIF)
+    {
+        // callback event function
+        if (NULL != can1RxEventHandler)
+        {
+            can1RxEventHandler(can1RxContextHandler);
+        }
+    }
+    
+    /* Transmit Buffer Interrupt */
+    if (C1INTbits.TBIF)
+    {
+    }
+    
+    IFS4CLR = _IFS4_CAN1IF_MASK;
+}
+
+
+/* *****************************************************************************
+ End of File
+ */
