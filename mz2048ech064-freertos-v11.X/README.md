@@ -3,7 +3,7 @@ This MCU model is no longer supported by MCC generator.
 
 Configuration:
 - external EC 24MHz
-- FreeRTOS v10.5.1
+- FreeRTOS v11.1.0
 
 System configuration:
 - SYSCLK = 100MHz

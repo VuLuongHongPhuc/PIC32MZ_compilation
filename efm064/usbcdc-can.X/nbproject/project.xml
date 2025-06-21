@@ -3,14 +3,12 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>mz2048efm064_usbcdc_can</name>
-            <creation-uuid>fb1d30d7-18f2-48b6-9922-c1c540451949</creation-uuid>
+            <name>usbcdc-can</name>
+            <creation-uuid>96bac8c5-90c5-4c48-9cb0-99afcbabf201</creation-uuid>
             <make-project-type>0</make-project-type>
             <sourceEncoding>ISO-8859-1</sourceEncoding>
             <make-dep-projects/>
-            <sourceRootList>
-                <sourceRootElem>../src</sourceRootElem>
-            </sourceRootList>
+            <sourceRootList/>
             <confList>
                 <confElem>
                     <name>default</name>

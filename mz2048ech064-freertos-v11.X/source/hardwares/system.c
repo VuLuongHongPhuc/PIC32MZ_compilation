@@ -94,15 +94,13 @@ void SYS_Initialize(void)
     SYS_Clock();
     
     /* Configure Prefetch, Wait States and ECC */
-    PRECONbits.PREFEN = 3;
-    PRECONbits.PFMWS = 1;
-    CFGCONbits.ECCCON = 3;
+    PRECONbits.PREFEN = 0b11;
+    PRECONbits.PFMWS = 0b001;
+    //CFGCONbits.ECCCON = 0b11; // (default)
+    //CFGCONbits.JTAGEN = 0;  // disable JTAG (default)
     
     // Data Memory SRAM wait states: Default Setting = 1; set it to 0
     //BMXCONbits.BMXWSDRM = 0;
-    
-    // disable JTAG port, normalement deja disable
-    //DDPCONbits.JTAGEN = 0;
     
 // *** interrupt **********************
     
@@ -129,7 +127,8 @@ void SYS_Clock(void)
 {
     SYS_DEVCON_SystemUnlock ( );
     
-    OSCCONbits.FRCDIV = 0;//OSC_FRC_DIV_1;
+    //OSCCONbits.FRCDIV = 0; // OSC_FRC_DIV_1 (default)
+    //OSCCONbits.SOSCRDY    secondary oscillator ready indicator
     
     /* PBxDIV : PERIPHERAL BUS ?x? CLOCK DIVISOR CONTROL REGISTER */
     

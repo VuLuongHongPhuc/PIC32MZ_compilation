@@ -1,4 +1,4 @@
-<config configName="default" projectName="MZ_usbcdc" configVersion="1.1" device="PIC32MZ2048EFM064" deviceLibraryClass="com.microchip.mcc.harmony.Harmony3Library" coreVersion="5.7.0">
+<config configName="default" projectName="usbcdc-can" configVersion="1.1" device="PIC32MZ2048EFM064" deviceLibraryClass="com.microchip.mcc.harmony.Harmony3Library" coreVersion="5.7.0">
    <usedPackages class="java.util.ArrayList"/>
    <usedClasses class="java.util.TreeMap">
       <entry>
@@ -394,7 +394,9 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="FreeRTOS" name="FREERTOS_PERIPHERAL_CLOCK_HZ"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;FreeRTOS&gt;
   &lt;FreeRTOS dnOrder=&quot;0&quot; id=&quot;FREERTOS_PERIPHERAL_CLOCK_HZ&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;FreeRTOS&quot; value=&quot;50000000&quot;/&gt;
+    &lt;/Values&gt;
   &lt;/FreeRTOS&gt;
 &lt;/FreeRTOS&gt;
 </value>
@@ -3694,9 +3696,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="AUTO_NOMINAL_BIT_TIMING_CALCULATION"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;AUTO_NOMINAL_BIT_TIMING_CALCULATION&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;User dnOrder=&quot;0&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -3705,15 +3705,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="BRP"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;BRP&quot;&gt;
-    &lt;Attributes dnOrder=&quot;0&quot;&gt;
-      &lt;Boolean dnOrder=&quot;0&quot; id=&quot;readOnly&quot;&gt;
-        &lt;Value dnOrder=&quot;0&quot;&gt;false&lt;/Value&gt;
-      &lt;/Boolean&gt;
-    &lt;/Attributes&gt;
-    &lt;Values dnOrder=&quot;1&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;1&quot;/&gt;
-      &lt;User dnOrder=&quot;1&quot; value=&quot;4&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -4918,9 +4910,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="CAN1_FILTER0_ID"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;CAN1_FILTER0_ID&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;User dnOrder=&quot;0&quot; value=&quot;0&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -4929,9 +4919,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="CAN1_FILTER0_ID_DECIMAL"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;CAN1_FILTER0_ID_DECIMAL&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;0&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -6344,9 +6332,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="CAN1_MASK0_ID"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;CAN1_MASK0_ID&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;User dnOrder=&quot;0&quot; value=&quot;0&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -6355,9 +6341,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="CAN1_MASK0_ID_DECIMAL"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;CAN1_MASK0_ID_DECIMAL&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;0&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -6429,7 +6413,9 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="CAN_CORE_CLOCK_FREQ"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;CAN_CORE_CLOCK_FREQ&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;50000000&quot;/&gt;
+    &lt;/Values&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -6474,9 +6460,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="CAN_INTERRUPT_MODE"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;CAN_INTERRUPT_MODE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;User dnOrder=&quot;0&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -6494,7 +6478,9 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="CAN_TIMESTAMP_ENABLE"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;CAN_TIMESTAMP_ENABLE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;User dnOrder=&quot;0&quot; value=&quot;false&quot;/&gt;
+    &lt;/Values&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -6521,14 +6507,8 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="NOMINAL_SAMPLE_POINT"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;NOMINAL_SAMPLE_POINT&quot;&gt;
-    &lt;Attributes dnOrder=&quot;0&quot;&gt;
-      &lt;Boolean dnOrder=&quot;0&quot; id=&quot;readOnly&quot;&gt;
-        &lt;Value dnOrder=&quot;0&quot;&gt;false&lt;/Value&gt;
-      &lt;/Boolean&gt;
-    &lt;/Attributes&gt;
-    &lt;Values dnOrder=&quot;1&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;68.0&quot;/&gt;
-      &lt;User dnOrder=&quot;1&quot; value=&quot;85.0&quot;/&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;User dnOrder=&quot;0&quot; value=&quot;85.0&quot;/&gt;
     &lt;/Values&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
@@ -6598,15 +6578,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="can1" name="PROPAG_TIME"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;can1&gt;
   &lt;can1 dnOrder=&quot;0&quot; id=&quot;PROPAG_TIME&quot;&gt;
-    &lt;Attributes dnOrder=&quot;0&quot;&gt;
-      &lt;Boolean dnOrder=&quot;0&quot; id=&quot;readOnly&quot;&gt;
-        &lt;Value dnOrder=&quot;0&quot;&gt;false&lt;/Value&gt;
-      &lt;/Boolean&gt;
-    &lt;/Attributes&gt;
-    &lt;Values dnOrder=&quot;1&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;640&quot;/&gt;
-      &lt;User dnOrder=&quot;1&quot; value=&quot;300&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/can1&gt;
 &lt;/can1&gt;
 </value>
@@ -6657,21 +6629,21 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="!@#harmonyUserData"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;UserData&gt;
   &lt;UserData dnOrder=&quot;0&quot;&gt;
-    &lt;GraphSettings canvasHeight=&quot;551&quot; canvasWidth=&quot;649&quot; dnOrder=&quot;0&quot;/&gt;
+    &lt;GraphSettings canvasHeight=&quot;554&quot; canvasWidth=&quot;843&quot; dnOrder=&quot;0&quot;/&gt;
     &lt;PowerProfiles dnOrder=&quot;1&quot;&gt;
       &lt;Profile dnOrder=&quot;0&quot; id=&quot;profile0&quot; name=&quot;Main&quot;/&gt;
     &lt;/PowerProfiles&gt;
     &lt;ComponentGraph dnOrder=&quot;2&quot; id=&quot;__ROOTVIEW&quot;&gt;
       &lt;ElementPositions dnOrder=&quot;0&quot;&gt;
-        &lt;ElementPosition dnOrder=&quot;0&quot; id=&quot;FreeRTOS&quot; x=&quot;516&quot; y=&quot;27&quot;/&gt;
-        &lt;ElementPosition dnOrder=&quot;1&quot; id=&quot;HarmonyCore&quot; x=&quot;345&quot; y=&quot;23&quot;/&gt;
-        &lt;ElementPosition dnOrder=&quot;2&quot; id=&quot;can1&quot; x=&quot;152&quot; y=&quot;167&quot;/&gt;
+        &lt;ElementPosition dnOrder=&quot;0&quot; id=&quot;FreeRTOS&quot; x=&quot;520&quot; y=&quot;20&quot;/&gt;
+        &lt;ElementPosition dnOrder=&quot;1&quot; id=&quot;HarmonyCore&quot; x=&quot;680&quot; y=&quot;20&quot;/&gt;
+        &lt;ElementPosition dnOrder=&quot;2&quot; id=&quot;can1&quot; x=&quot;103&quot; y=&quot;147&quot;/&gt;
         &lt;ElementPosition dnOrder=&quot;3&quot; id=&quot;core&quot; x=&quot;240&quot; y=&quot;20&quot;/&gt;
         &lt;ElementPosition dnOrder=&quot;4&quot; id=&quot;dfp&quot; x=&quot;20&quot; y=&quot;20&quot;/&gt;
-        &lt;ElementPosition dnOrder=&quot;5&quot; id=&quot;drv_usbhs_v1&quot; x=&quot;35&quot; y=&quot;385&quot;/&gt;
-        &lt;ElementPosition dnOrder=&quot;6&quot; id=&quot;uart1&quot; x=&quot;145&quot; y=&quot;271&quot;/&gt;
-        &lt;ElementPosition dnOrder=&quot;7&quot; id=&quot;usb_device&quot; x=&quot;270&quot; y=&quot;392&quot;/&gt;
-        &lt;ElementPosition dnOrder=&quot;8&quot; id=&quot;usb_device_cdc&quot; x=&quot;476&quot; y=&quot;387&quot;/&gt;
+        &lt;ElementPosition dnOrder=&quot;5&quot; id=&quot;drv_usbhs_v1&quot; x=&quot;58&quot; y=&quot;382&quot;/&gt;
+        &lt;ElementPosition dnOrder=&quot;6&quot; id=&quot;uart1&quot; x=&quot;105&quot; y=&quot;228&quot;/&gt;
+        &lt;ElementPosition dnOrder=&quot;7&quot; id=&quot;usb_device&quot; x=&quot;244&quot; y=&quot;386&quot;/&gt;
+        &lt;ElementPosition dnOrder=&quot;8&quot; id=&quot;usb_device_cdc&quot; x=&quot;401&quot; y=&quot;390&quot;/&gt;
       &lt;/ElementPositions&gt;
     &lt;/ComponentGraph&gt;
   &lt;/UserData&gt;
@@ -6738,42 +6710,6 @@
 </value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_14_FUNCTION_TYPE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_14_FUNCTION_TYPE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_14_MODE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_14_MODE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_16_FUNCTION_TYPE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_16_FUNCTION_TYPE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_16_MODE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_16_MODE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_33_MODE"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
   &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_33_MODE&quot;&gt;
@@ -6785,48 +6721,12 @@
 </value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_38_DIR"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_38_DIR&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_38_FUNCTION_NAME"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_38_FUNCTION_NAME&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_38_FUNCTION_TYPE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_38_FUNCTION_TYPE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_38_MODE"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
   &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_38_MODE&quot;&gt;
     &lt;Values dnOrder=&quot;0&quot;&gt;
       &lt;User dnOrder=&quot;0&quot; value=&quot;DIGITAL&quot;/&gt;
     &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_38_PD"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_38_PD&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/core&gt;
 &lt;/core&gt;
 </value>
@@ -6876,6 +6776,17 @@
 </value>
       </entry>
       <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_41_SR"/>
+         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
+  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_41_SR&quot;&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;User dnOrder=&quot;0&quot; value=&quot;0&quot;/&gt;
+    &lt;/Values&gt;
+  &lt;/core&gt;
+&lt;/core&gt;
+</value>
+      </entry>
+      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_42_DIR"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
   &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_42_DIR&quot;&gt;
@@ -6914,6 +6825,17 @@
   &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_42_MODE&quot;&gt;
     &lt;Values dnOrder=&quot;0&quot;&gt;
       &lt;User dnOrder=&quot;0&quot; value=&quot;DIGITAL&quot;/&gt;
+    &lt;/Values&gt;
+  &lt;/core&gt;
+&lt;/core&gt;
+</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="BSP_PIN_42_SR"/>
+         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
+  &lt;core dnOrder=&quot;0&quot; id=&quot;BSP_PIN_42_SR&quot;&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;User dnOrder=&quot;0&quot; value=&quot;0&quot;/&gt;
     &lt;/Values&gt;
   &lt;/core&gt;
 &lt;/core&gt;
@@ -7162,103 +7084,12 @@
 </value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN1_INTERRUPT_ENABLE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN1_INTERRUPT_ENABLE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN1_INTERRUPT_ENABLE_UPDATE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN1_INTERRUPT_ENABLE_UPDATE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;true&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN1_INTERRUPT_HANDLER"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN1_INTERRUPT_HANDLER&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;CAN1_Handler&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN1_INTERRUPT_HANDLER_LOCK"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN1_INTERRUPT_HANDLER_LOCK&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;can1&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN2_CLOCK_ENABLE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN2_CLOCK_ENABLE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN2_CLOCK_FREQUENCY"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
   &lt;core dnOrder=&quot;0&quot; id=&quot;CAN2_CLOCK_FREQUENCY&quot;&gt;
     &lt;Values dnOrder=&quot;0&quot;&gt;
       &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;0&quot;/&gt;
     &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN2_INTERRUPT_ENABLE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN2_INTERRUPT_ENABLE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN2_INTERRUPT_ENABLE_UPDATE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN2_INTERRUPT_ENABLE_UPDATE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;true&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN2_INTERRUPT_HANDLER"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN2_INTERRUPT_HANDLER&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="CAN2_INTERRUPT_HANDLER_LOCK"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;CAN2_INTERRUPT_HANDLER_LOCK&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/core&gt;
 &lt;/core&gt;
 </value>
@@ -7764,72 +7595,6 @@
   &lt;core dnOrder=&quot;0&quot; id=&quot;EVIC_133_INTERRUPT_HANDLER&quot;&gt;
     &lt;Values dnOrder=&quot;0&quot;&gt;
       &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;DRV_USBHS_DMAInterruptHandler&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="EVIC_151_ENABLE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;EVIC_151_ENABLE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="EVIC_151_HANDLER_LOCK"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;EVIC_151_HANDLER_LOCK&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="EVIC_151_INTERRUPT_HANDLER"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;EVIC_151_INTERRUPT_HANDLER&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;CAN1_Handler&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="EVIC_152_ENABLE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;EVIC_152_ENABLE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="EVIC_152_HANDLER_LOCK"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;EVIC_152_HANDLER_LOCK&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/core&gt;
-&lt;/core&gt;
-</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="EVIC_152_INTERRUPT_HANDLER"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;EVIC_152_INTERRUPT_HANDLER&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;CAN2_Handler&quot;/&gt;
     &lt;/Values&gt;
   &lt;/core&gt;
 &lt;/core&gt;
@@ -8544,9 +8309,20 @@
 </value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="SYS_PORT_F_CNPD"/>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="SYS_PORT_F_SRCON0"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
-  &lt;core dnOrder=&quot;0&quot; id=&quot;SYS_PORT_F_CNPD&quot;&gt;
+  &lt;core dnOrder=&quot;0&quot; id=&quot;SYS_PORT_F_SRCON0&quot;&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;0&quot;/&gt;
+    &lt;/Values&gt;
+  &lt;/core&gt;
+&lt;/core&gt;
+</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="core" name="SYS_PORT_F_SRCON1"/>
+         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;core&gt;
+  &lt;core dnOrder=&quot;0&quot; id=&quot;SYS_PORT_F_SRCON1&quot;&gt;
     &lt;Values dnOrder=&quot;0&quot;&gt;
       &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;core&quot; value=&quot;0&quot;/&gt;
     &lt;/Values&gt;
@@ -9395,7 +9171,9 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="uart1" name="UART_CLOCK_FREQ"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;uart1&gt;
   &lt;uart1 dnOrder=&quot;0&quot; id=&quot;UART_CLOCK_FREQ&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;/&gt;
+    &lt;Values dnOrder=&quot;0&quot;&gt;
+      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;uart1&quot; value=&quot;50000000&quot;/&gt;
+    &lt;/Values&gt;
   &lt;/uart1&gt;
 &lt;/uart1&gt;
 </value>
@@ -9729,17 +9507,6 @@
 </value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="usb_device" name="CONFIG_USB_DEVICE_DESCRIPTOR_IAD_ENABLE"/>
-         <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usb_device&gt;
-  &lt;usb_device dnOrder=&quot;0&quot; id=&quot;CONFIG_USB_DEVICE_DESCRIPTOR_IAD_ENABLE&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;usb_device&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
-  &lt;/usb_device&gt;
-&lt;/usb_device&gt;
-</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="usb_device" name="CONFIG_USB_DEVICE_ENDPOINTS_NUMBER"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usb_device&gt;
   &lt;usb_device dnOrder=&quot;0&quot; id=&quot;CONFIG_USB_DEVICE_ENDPOINTS_NUMBER&quot;&gt;
@@ -10000,14 +9767,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="usb_device" name="USB_DEVICE_RTOS_DELAY"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usb_device&gt;
   &lt;usb_device dnOrder=&quot;0&quot; id=&quot;USB_DEVICE_RTOS_DELAY&quot;&gt;
-    &lt;Attributes dnOrder=&quot;0&quot;&gt;
-      &lt;Boolean dnOrder=&quot;0&quot; id=&quot;visible&quot;&gt;
-        &lt;Value dnOrder=&quot;0&quot;&gt;true&lt;/Value&gt;
-      &lt;/Boolean&gt;
-    &lt;/Attributes&gt;
-    &lt;Values dnOrder=&quot;1&quot;&gt;
-      &lt;User dnOrder=&quot;0&quot; value=&quot;5&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/usb_device&gt;
 &lt;/usb_device&gt;
 </value>
@@ -10034,9 +9794,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="usb_device" name="USB_DEVICE_RTOS_USE_DELAY"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usb_device&gt;
   &lt;usb_device dnOrder=&quot;0&quot; id=&quot;USB_DEVICE_RTOS_USE_DELAY&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;User dnOrder=&quot;0&quot; value=&quot;true&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/usb_device&gt;
 &lt;/usb_device&gt;
 </value>
@@ -10185,9 +9943,7 @@
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="usb_device_cdc_0" name="CONFIG_USB_DEVICE_FUNCTION_USE_IAD"/>
          <value>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;usb_device_cdc_0&gt;
   &lt;usb_device_cdc_0 dnOrder=&quot;0&quot; id=&quot;CONFIG_USB_DEVICE_FUNCTION_USE_IAD&quot;&gt;
-    &lt;Values dnOrder=&quot;0&quot;&gt;
-      &lt;Dynamic dnOrder=&quot;0&quot; id=&quot;usb_device_cdc_0&quot; value=&quot;false&quot;/&gt;
-    &lt;/Values&gt;
+    &lt;Values dnOrder=&quot;0&quot;/&gt;
   &lt;/usb_device_cdc_0&gt;
 &lt;/usb_device_cdc_0&gt;
 </value>
@@ -10497,7 +10253,7 @@
       </entry>
       <entry>
          <file>..\src\config\default\tasks.c</file>
-         <hash>47b669e036bc76ed181b396c6b1c7f340e370cdac886884f77bc08d807be7b5d</hash>
+         <hash>b456466fe6f50001b21566d01bbf4acc823737dbc2e5c8d94f96c80c05f7ee33</hash>
       </entry>
       <entry>
          <file>..\src\config\default\toolchain_specifics.h</file>

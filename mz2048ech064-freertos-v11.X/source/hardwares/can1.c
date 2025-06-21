@@ -25,7 +25,7 @@
 #define CAN_FIFO_OFFSET              (0x10U)
 
 #define __EXTENDED_ID    1
-#define __LOOPBACK_MODE  0
+
 
 
 #define CAN_MESSAGE_RAM_TX_SIZE        8U   /* FIFO0 Max 32 */
@@ -56,7 +56,6 @@ static void SetBaudrate(void)
 #endif
     
     C1CFG = 0x00008604;
-    //C2CFGbits.SEG2PHTS = 1;
 }
 
 /**
@@ -131,10 +130,9 @@ static void SetInterrupt()
 
 void CAN1_Initialize(void)
 {
-    
     /* !! The module must be in configuration mode C2CON<23:21> = 100 to configure
      * !! Configuration order is mandatory
-     * C1CFG
+     * C1CFG  (CiCFG)
      * C1FIFOBA
      * C1RXMn
      * C1FIFOCONn<20:16> - FSIZE<4:0>
@@ -162,33 +160,45 @@ void CAN1_Initialize(void)
     
     /* Switch the CAN module ON */
     C1CONSET = _C1CON_ON_MASK;
-    //CAN1_Enable();
+    
     
     /* At reset, normally on configuration mode */
     /* Switch the CAN module to Configuration mode. Wait until the switch is complete */
-    C1CONbits.REQOP = CAN_CONFIGURATION_MODE;
-    while (C1CONbits.OPMOD != CAN_CONFIGURATION_MODE)
+    C1CONbits.REQOP = CAN_MODE_CONFIGURATION;
+    while (C1CONbits.OPMOD != CAN_MODE_CONFIGURATION)
     {        
     }
     
-    SetBaudrate();
-    SetFIFO();
-    SetAcceptanceFilter();
-    //SetInterrupt();
+    /* Set baudrate*/
+    C1CFG = 0x00008604;  // 500 kbit/s
+    //C1CFG = 0x00008609;  // 250 kbit/s
+    
+    /* Set Start address of MB0 in FIFO0 */
+    C1FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
+            
+    /* Set Transmit FIFO size 8 */
+    C1FIFOCON0bits.TXPRI = 0;
+    C1FIFOCON0bits.TXEN = 1;
+    C1FIFOCON0bits.FSIZE = CAN_MESSAGE_RAM_TX_SIZE - 1U;
+        
+    /* Set FIFO1 Full Receive Message size 8*/
+    C1FIFOCON1bits.TXPRI = 0;
+    C1FIFOCON1bits.TXEN = 0;
+    C1FIFOCON1bits.FSIZE = CAN_MESSAGE_RAM_RX_SIZE - 1U;
     
     
-#if (__LOOPBACK_MODE == 1)
-    C1CONbits.REQOP = CAN_LOOPBACK_MODE;
-    //while(C1CONbits.OPMOD != CAN_LOOPBACK_MODE)    { /* Do Nothing - wait */ }
-#else
+    /* Filter/mask acceptance */
+    C1RXF0 = 0;
+    C1FLTCON0 = 0x81; 
+    C1RXM0 = 0;
+
+    
 
     /* The CAN module can now be placed into normal mode if no further */
-    C1CONbits.REQOP = CAN_OPERATION_MODE;
-    while(C1CONbits.OPMOD != CAN_OPERATION_MODE)
+    C1CONbits.REQOP = CAN_MODE_OPERATION;
+    while(C1CONbits.OPMOD != CAN_MODE_OPERATION)
     {        
     }
-#endif
-
 
 #if __IN_SYSTEM_INIT__
     if(dma_suspend == 0)
@@ -247,7 +257,7 @@ uint8_t CAN1_Read(uint32_t *id, uint8_t *length, uint8_t *data, uint16_t *timest
     CAN_TX_RX_MSG_BUFFER *rxMessage = NULL; /* Points to message buffer to be written */
     
     /* if not empty */
-    if (!C1FIFOINT1bits.RXNEMPTYIF)
+    if (C1FIFOINT1bits.RXNEMPTYIF)
     {
         rxMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C1FIFOUA1);
         

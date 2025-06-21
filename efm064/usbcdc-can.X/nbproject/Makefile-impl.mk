@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=mz2048efm064_usbcdc_can.X
+PROJECTNAME=usbcdc-can.X
 
 # Active Configuration
 DEFAULTCONF=default

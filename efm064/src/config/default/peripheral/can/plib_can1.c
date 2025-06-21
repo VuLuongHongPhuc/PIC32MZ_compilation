@@ -52,8 +52,6 @@
 #include "plib_can1.h"
 #include "interrupts.h"
 
-#define __DEBUG_TX__ 0
-
 // *****************************************************************************
 // *****************************************************************************
 // Global Data
@@ -225,25 +223,10 @@ bool CAN1_MessageTransmit(uint32_t id, uint8_t length, uint8_t* data, uint8_t fi
             }
             txMessage->msgEID |= length;
 
-
-#if __DEBUG_TX__
-            /* @ txMessage 
-            data[0] = (uint8_t)(((uint32_t)&txMessage) >> 24);
-            data[1] = (uint8_t)(((uint32_t)&txMessage) >> 16);
-            data[2] = (uint8_t)(((uint32_t)&txMessage) >> 8);
-            data[3] = (uint8_t)((uint32_t)&txMessage & 0xFF);
-             */
-            
-            uint32_t val = *(uint32_t*)&txMessage;
-            data[0] = (uint8_t)(val >> 24);
-            data[1] = (uint8_t)(val >> 16);
-            data[2] = (uint8_t)(val >> 8);
-            data[3] = (uint8_t)(val & 0xFF);
-#endif
             while(count < length)
             {
                 txMessage->msgData[count++] = *data++;
-            }            
+            }
         }
 
         /* Request the transmit */

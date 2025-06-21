@@ -49,13 +49,13 @@ static inline void SetBaudrate(void)
      * 
      * Sample Point = (SyncSeg + ProgSeg + PhaseSeg1) / Total TQ
      * SyncSeg = 1 TQ (always)
-     * PropSeg+PhaseSeg1=(0.875×10)?1=16.5 => 16/17
+     * PropSeg+PhaseSeg1=(0.875ï¿½10)?1=16.5 => 16/17
      * And then PhaseSeg2 = 3 TQ (since total is 20 TQ).
      * You typically want PhaseSeg1 larger than PropSeg, so let's pick:
      * PropSeg = 4 TQ
      * PhaseSeg1 = 3 TQ
      * PhaseSeg2 = 2 TQ
-     * => 4+3+2=6(Sample at 9/10=85%)
+     * => 4+3+2=6(Sampleï¿½atï¿½9/10=85%)
      * 
      * SJW (synchronization jump width) can be 1?2 TQ, usually 1 or 2 is fine. Let's set SJW = 1.
      */
@@ -177,8 +177,8 @@ void CAN2_Initialize(void)
     
     /* At reset, normally on configuration mode */
     /* Switch the CAN module to Configuration mode. Wait until the switch is complete */
-    C2CONbits.REQOP = CAN_CONFIGURATION_MODE;
-    while (C2CONbits.OPMOD != CAN_CONFIGURATION_MODE)
+    C2CONbits.REQOP = CAN_MODE_CONFIGURATION;
+    while (C2CONbits.OPMOD != CAN_MODE_CONFIGURATION)
     {
         /* Do nothing - wait */
     }
@@ -188,8 +188,8 @@ void CAN2_Initialize(void)
     SetInterrupt();   
 
 #if (__LOOPBACK_MODE == 1)
-    C2CONbits.REQOP = CAN_LOOPBACK_MODE;
-    while(C2CONbits.OPMOD != CAN_LOOPBACK_MODE)
+    C2CONbits.REQOP = CAN_MODE_LOOPBACK;
+    while(C2CONbits.OPMOD != CAN_MODE_LOOPBACK)
     {
         /* Do Nothing */
     }
@@ -256,7 +256,7 @@ uint8_t CAN2_Read(uint32_t *id, uint8_t *length, uint8_t *data, uint16_t *timest
     CAN_TX_RX_MSG_BUFFER *rxMessage = NULL; /* Points to message buffer to be written */
     
     /* if not empty */
-    if (!C2FIFOINT1bits.RXNEMPTYIF)
+    if (C2FIFOINT1bits.RXNEMPTYIF)
     {
         rxMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C2FIFOUA1);
         

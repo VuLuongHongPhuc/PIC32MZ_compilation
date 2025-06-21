@@ -4,6 +4,8 @@
  * Do not use RF3 and USBID = OFF
  * 
  * voir usb_device_cdc.h L.740
+ * 
+ * https://developerhelp.microchip.com/xwiki/bin/view/software-tools/harmony/get-start-tm-drvr-middlware-freertos/
  *******************************************************************************/
 
 // *****************************************************************************
@@ -509,7 +511,8 @@ void APP_Tasks ( void )
                 appData.readTransferHandle =  USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
 
                 USB_DEVICE_CDC_Read (USB_DEVICE_CDC_INDEX_0,
-                        &appData.readTransferHandle, appData.cdcReadBuffer,
+                        &appData.readTransferHandle,
+                        appData.cdcReadBuffer,
                         APP_READ_BUFFER_SIZE);
                 
                 if(appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID)

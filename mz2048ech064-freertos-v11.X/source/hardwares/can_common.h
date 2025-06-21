@@ -27,9 +27,9 @@
 extern "C" {
 #endif
 
-#define CAN_CONFIGURATION_MODE       (0x4U)
-#define CAN_OPERATION_MODE           (0x0U)
-#define CAN_LOOPBACK_MODE            (0x2U)
+#define CAN_MODE_CONFIGURATION       (0x4U)
+#define CAN_MODE_LOOPBACK            (0x2U)
+#define CAN_MODE_OPERATION           (0x0U)
     
 #define CAN_MSG_IDE_MASK            (0x10000000U)
 #define CAN_MSG_SID_MASK            (0x7FFU)
