@@ -30,6 +30,8 @@
       <itemPath>source/hardwares/can1.h</itemPath>
       <itemPath>source/hardwares/trng.h</itemPath>
       <itemPath>source/hardwares/trng.c</itemPath>
+      <itemPath>source/hardwares/uart1.h</itemPath>
+      <itemPath>source/hardwares/uart1.c</itemPath>
     </logicalFolder>
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
