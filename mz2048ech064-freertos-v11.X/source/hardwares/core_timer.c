@@ -27,9 +27,11 @@ static uint32_t coretimer_periode = 0;
  * US_TO_CT_TICKS -> µs
  */
 void CORETIMER_Initialize(uint32_t period)
-{
-    // Disable interrupts globally
-    __builtin_disable_interrupts();
+{   
+    uint32_t int_flag;
+    
+    /* Disable interrupts globally */
+    int_flag = __builtin_disable_interrupts();
             
     // Set the core timer period
     coretimer_compare_value = coretimer_periode = MS_TO_CT_TICKS * period;
@@ -46,8 +48,11 @@ void CORETIMER_Initialize(uint32_t period)
     IPC0bits.CTIS = 0;  // Set core timer interrupt sub-priority
     IEC0SET = _IEC0_CTIE_MASK; // Enable the core timer interrupt
 
-    // Enable interrupts globally
-    __builtin_enable_interrupts();
+    if (int_flag)
+    {
+        /* Enable interrupts globally */
+        __builtin_enable_interrupts();
+    }
 }
 
 /* @brief Start Core timer - Enable IT
@@ -132,6 +137,9 @@ void CORETIMER_CallbackRegister(void* callbackFunc, uintptr_t context)
     CallbackContext = context;
 }
 
+__attribute__((weak)) void CORETIMER_callback(void)
+{
+}
 
 #if 0
 /* Determine IPL and context-saving mode at runtime */
@@ -158,14 +166,17 @@ void __ISR(_CORE_TIMER_VECTOR, IPL2AUTO) _InterruptCoreTimerHandler(void)
     // Toggle the LED
     //LED_3_Toggle();
     
+    // Clear the core timer interrupt flag
+    IFS0CLR = _IFS0_CTIF_MASK; 
+
+    
     // Callback function
     if (CallbackEventHandler != NULL)
     {
         CallbackEventHandler(CallbackContext);
     }
-
-    // Clear the core timer interrupt flag
-    IFS0CLR = _IFS0_CTIF_MASK; 
+    
+    CORETIMER_callback();
 }
 
 /*EOF*/

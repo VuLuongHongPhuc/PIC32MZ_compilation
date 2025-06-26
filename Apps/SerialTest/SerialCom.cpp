@@ -21,10 +21,13 @@ SerialCom::SerialCom(std::string name)
 }
 
 
-int SerialCom::Open()
+int SerialCom::Open(std::string serialPort)
 {
+    // Convert std::string to LPCWSTR (wide string)
+    //std::wstring wSerialPort(serialPort.begin(), serialPort.end());
+
     // open com port
-    m_hUart = CreateFile(TTL_COM_PORT, // drive name to open
+    m_hUart = CreateFileA(serialPort.c_str(), // drive name to open
         GENERIC_READ | GENERIC_WRITE,       // must be opened with exclusive access(No Sharing)
         0,                                  // no access to the drive
         NULL,                               // default security attributes

@@ -17,9 +17,10 @@
 #include "xc.h"
 #include <sys/attribs.h>
 #include <sys/kmem.h>  // KVA_TO_PA
-#include <proc/p32mz2048ech064.h>  // IPLxAUTO, IPLxSRS
+//#include <proc/p32mz2048ech064.h>  // IPLxAUTO, IPLxSRS
 
 #include "can1.h"
+#include "gpio.h"
 
 
 #define CAN_FIFO_OFFSET              (0x10U)
@@ -30,14 +31,12 @@
 
 #define CAN_MESSAGE_RAM_TX_SIZE        8U   /* FIFO0 Max 32 */
 #define CAN_MESSAGE_RAM_RX_SIZE        8U   /* FIFO1 max 32 */
-#define CAN_MESSAGE_RAM_CONFIG_SIZE    (CAN_MESSAGE_RAM_TX_SIZE+CAN_MESSAGE_RAM_RX_SIZE)
+#define CAN_MESSAGE_RAM_CONFIG_SIZE    (64) /* MAX for 2 channel FIFO */
 
 
 /* Allocate TX + RX message buffer size. */
 static CAN_TX_RX_MSG_BUFFER __attribute__((coherent, aligned(32))) can_message_buffer[CAN_MESSAGE_RAM_CONFIG_SIZE];
 
-static CAN_CALLBACK can1RxEventHandler = NULL;
-static uintptr_t can1RxContextHandler;
 
 
 static void SetBaudrate(void)
@@ -101,8 +100,9 @@ static void SetAcceptanceFilter(void)
 
 void CAN1_RemapPPS(void)
 {
+    
     /* Unlock Peripheral Pin. Writes to PPS registers are allowed */
-    //CFGCONbits.IOLOCK = 0U;
+    CFGCONbits.IOLOCK = 0U;
 
     /* PPS Remapping */
     C1RXR = 0b0001;   /* pin.5  input  RPG7  RG7 */
@@ -113,8 +113,11 @@ void CAN1_RemapPPS(void)
 }
 
 
-static void SetInterrupt()
+static void SetInterrupt(void)
 {
+    /*
+     * CiINT : CAN INTERRUPT REGISTER
+     */
     C1INTbits.IVRIE = 1;  // Invalid Message Received Interrupt Enable bit
     //C1INTbits.CERRIE = 1; // CAN Bus Error Interrupt Enable bit
     //C1INTbits.SERRIE = 1; // System Error Interrupt Enable bit
@@ -124,7 +127,7 @@ static void SetInterrupt()
     IPC37bits.CAN1IP = 2;  /* Interrupt priority */
     IPC37bits.CAN1IS = 1;  /* Interrupt sub-priority */
     
-    IEC4SET = _IEC4_CAN1IE_MASK; /* Enable CAN2 interrupt vector */
+    IEC4SET = _IEC4_CAN1IE_MASK; /* Enable CAN interrupt vector */
 }
 
 
@@ -132,11 +135,19 @@ void CAN1_Initialize(void)
 {
     /* !! The module must be in configuration mode C2CON<23:21> = 100 to configure
      * !! Configuration order is mandatory
-     * C1CFG  (CiCFG)
-     * C1FIFOBA
-     * C1RXMn
-     * C1FIFOCONn<20:16> - FSIZE<4:0>
-     * C1FIFOCONn<12> - DONLY
+     * CiCFG: CAN BAUD RATE CONFIGURATION REGISTER
+     * CiCON: CAN MODULE CONTROL REGISTER 
+     * 
+     * CiRXMN: CAN ACCEPTANCE FILTER MASK N REGISTER (N = 0, 1, 2 OR 3)
+     * CiFLTCON0: CAN FILTER CONTROL REGISTER 0
+     * CiFLTCON1: CAN FILTER CONTROL REGISTER 1
+     * CiRXFn: CAN ACCEPTANCE FILTER N REGISTER 7 (n = 0 THROUGH 31)
+     * CiFIFOCONn: CAN FIFO CONTROL REGISTER (n = 0 THROUGH 31)
+     * CiFIFOINTn: CAN FIFO INTERRUPT REGISTER (n = 0 THROUGH 31)
+     * 
+     * CiFIFOBA: CAN MESSAGE BUFFER BASE ADDRESS REGISTER
+     * CiFIFOUAn: CAN FIFO USER ADDRESS REGISTER (n = 0 THROUGH 31)
+     * CiFIFOCIn: CAN MODULE MESSAGE INDEX REGISTER (n = 0 THROUGH 31)
      */
 
 #if __IN_SYSTEM_INIT__    
@@ -156,7 +167,15 @@ void CAN1_Initialize(void)
     }
 #endif
     
+    volatile uint32_t int_status;
+    int_status = __builtin_disable_interrupts();
+    
 
+    /* Mandatory - set IO to digital */
+    ANSELGCLR = 1U<<7;  /* C1RX */
+    ANSELGCLR = 1U<<8;  /* C1TX */
+
+    
     
     /* Switch the CAN module ON */
     C1CONSET = _C1CON_ON_MASK;
@@ -173,9 +192,11 @@ void CAN1_Initialize(void)
     C1CFG = 0x00008604;  // 500 kbit/s
     //C1CFG = 0x00008609;  // 250 kbit/s
     
+    
     /* Set Start address of MB0 in FIFO0 */
     C1FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
-            
+    
+    
     /* Set Transmit FIFO size 8 */
     C1FIFOCON0bits.TXPRI = 0;
     C1FIFOCON0bits.TXEN = 1;
@@ -192,13 +213,21 @@ void CAN1_Initialize(void)
     C1FLTCON0 = 0x81; 
     C1RXM0 = 0;
 
-    
+    //SetInterrupt();
 
     /* The CAN module can now be placed into normal mode if no further */
     C1CONbits.REQOP = CAN_MODE_OPERATION;
     while(C1CONbits.OPMOD != CAN_MODE_OPERATION)
     {        
     }
+    
+    CAN1_RemapPPS();
+    
+    if (int_status)
+    {
+        __builtin_enable_interrupts();        
+    }
+    
 
 #if __IN_SYSTEM_INIT__
     if(dma_suspend == 0)
@@ -366,19 +395,8 @@ uint8_t CAN1_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIB
     return 0;
 }
 
-/* @brief Sets the pointer to the function (and it's context) to be called when the
-    given CAN's receive transfer events occur.
- * @param callback - callback function pointer
- * @param contextHandle - loopback data pointer
- */
-void CAN1_RxCallbackRegister(CAN_CALLBACK callback, uintptr_t contextHandle)
+__attribute__((weak)) void CAN1_ReceiveCallback(void)
 {
-    if (callback != NULL)
-    {
-        can1RxEventHandler = callback;
-        can1RxContextHandler = contextHandle;
-    }
-    return;
 }
 
 // *****************************************************************************
@@ -388,15 +406,18 @@ void CAN1_RxCallbackRegister(CAN_CALLBACK callback, uintptr_t contextHandle)
 // *****************************************************************************
 void __ISR(_CAN1_VECTOR, IPL2AUTO) CAN1_Handler (void)
 {
+    /*
+     * CiVEC : CAN INTERRUPT CODE REGISTER
+     * CiINT: CAN INTERRUPT REGISTER
+     * CiTREC: CAN TRANSMIT/RECEIVE ERROR COUNT REGISTER
+     * CiFSTAT: CAN FIFO STATUS REGISTER
+     */
     
     /* Receive buffer interrupt */
     if (C1INTbits.RBIF)
     {
         // callback event function
-        if (NULL != can1RxEventHandler)
-        {
-            can1RxEventHandler(can1RxContextHandler);
-        }
+        CAN1_ReceiveCallback();
     }
     
     /* Transmit Buffer Interrupt */

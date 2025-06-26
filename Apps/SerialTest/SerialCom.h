@@ -10,7 +10,7 @@ public:
 	SerialCom(std::string name);
 		
 
-	int Open();
+	int Open(std::string serialPort = "\\\\.\\COM12");
 	void Close();
 	void Write(const uint8_t& c);
 	int32_t Write(const uint8_t* const pBuf, const int lenght);

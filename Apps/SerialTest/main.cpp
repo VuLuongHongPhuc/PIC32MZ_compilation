@@ -19,30 +19,39 @@ static bool g_Exit = false;
 void ThreadSerial()
 {
     SerialCom serial("ToDoLater");
-    if (serial.Open() == -1)
+    if (serial.Open("COM6") == -1)
     {
         std::cout << "ERROR Open COM\n";
         //return EXIT_FAILURE;
         return;
     }
 
+    int countRx = 0;
+    uint32_t countTxLine = 0;
+
     while (g_Exit == false)
     {
-        uint8_t buf[80] = { 0 };
+        uint8_t buf[8] = { 0 };
         int32_t bytes_read = serial.Read(buf, sizeof(buf));
         
         if (bytes_read > 0)
         {
             std::stringstream ss;
-            std::string str1_hex;
-
+            ss << "[" << countTxLine++ << "] ";
             ss << "Bytes read:" << std::setw(2) << std::dec << bytes_read << "\n";
             for (int i = 0; i < bytes_read; i++)
             {
-                ss << " 0x" << std::setw(2) << std::hex << (int)buf[i];
+                if (buf[i] < 0x10)
+                {
+                    //ss << " 0x0" << std::setw(2) << std::hex << (int)buf[i];
+                    ss << " 0x0" << std::hex << (int)buf[i];
+                }
+                else
+                {
+                    ss << " 0x" << std::hex << (int)buf[i];
+                }
             }
-            str1_hex += ss.str();
-            std::cout << str1_hex << '\n';
+            std::cout << ss.str() << '\n';
         }
         else if (bytes_read == -1)
         {
@@ -50,6 +59,16 @@ void ThreadSerial()
         }
 
         Sleep(100); // Sleep to avoid busy waiting
+#if 1
+        if (countRx++ > 20)
+        {
+            // Example of sending data
+            uint8_t dataToSend = 0xAA; // Example data
+            serial.Write(dataToSend);
+            std::cout << "Sent: 0x" << std::hex << (int)dataToSend << '\n';
+            countRx = 0; // Reset count after sending
+        }
+#endif
     }
 
     serial.Close();
@@ -70,16 +89,15 @@ void ThreadSignalOut()
 }
 
 int main()
-{    
-
+{
     std::thread serialThread(ThreadSerial);
     std::thread signalThread(ThreadSignalOut);
     serialThread.join(); // Wait for the serial thread to finish
     signalThread.join(); // Wait for the signal thread to finish
-    std::cout << "Threads finished.\n";
-    // Optionally, you can clean up resources or perform any final actions here.
-    std::cout << "Exiting main thread.\n";
-    
+
+
+    std::cout << "Threads finished.\n";    
+    std::cout << "Exiting main thread.\n";    
     
     return EXIT_SUCCESS;
 }

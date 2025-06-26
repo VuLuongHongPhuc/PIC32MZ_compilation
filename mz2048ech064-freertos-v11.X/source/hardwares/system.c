@@ -80,11 +80,6 @@ static void SYS_DEVCON_SystemLock (void)
     }
 }
 
-static void initGPIO(void)
-{
-    CAN1_RemapPPS();
-}
-
 void SYS_Initialize(void)
 {
     /* Interrupts must be disabled when enabling the Prefetch Cache Module */
@@ -111,11 +106,12 @@ void SYS_Initialize(void)
     // Interrupt Proximity Timer Control bits
     //INTCONbits.TPC = 0; //default disable
     
-    CAN1_Initialize();
+    
+    /* Init module */
     
     
-    /*** GPIO remap PPS ***/
-    initGPIO();
+    
+    /* Init PPS */
     
     
     

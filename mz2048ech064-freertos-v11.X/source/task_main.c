@@ -40,7 +40,8 @@ TaskHandle_t xTask_Main;
 
 void MAIN_Task( void *pvParameters  )
 {   
-    configASSERT( ( uint32_t ) pvParameters == 1UL );
+    //configASSERT( ( uint32_t ) pvParameters == 1UL );
+    (void)pvParameters;
     
     while(true)
     {

@@ -15,7 +15,7 @@
 #include "xc.h"
 #include <sys/attribs.h>
 #include <sys/kmem.h>  // KVA_TO_PA
-#include <proc/p32mz2048ech064.h>  // IPLxAUTO, IPLxSRS
+//#include <proc/p32mz2048ech064.h>  // IPLxAUTO, IPLxSRS
 
 
 #include "can2.h"
@@ -32,10 +32,6 @@
 
 /* Allocate TX + RX message buffer size. */
 static CAN_TX_RX_MSG_BUFFER __attribute__((coherent, aligned(32))) can_message_buffer[CAN_MESSAGE_RAM_CONFIG_SIZE];
-
-static CAN_CALLBACK can2RxEventHandler = NULL;
-static uintptr_t can2RxContextHandler;
-
 
 
 
@@ -195,15 +191,10 @@ void CAN2_Initialize(void)
     }
 #else
     /* The CAN module can now be placed into normal mode if no further */
-    //C2CONbits.REQOP = CAN_OPERATION_MODE;
-    //while(C2CONbits.OPMOD != CAN_OPERATION_MODE)    { /* Do Nothing - wait */ }
-    
-    /* Switch the CAN module to CAN_OPERATION_MODE. Wait until the switch is complete */
-    C2CON = (C2CON & ~_C2CON_REQOP_MASK) | ((CAN_OPERATION_MODE << _C2CON_REQOP_POSITION) & _C2CON_REQOP_MASK);
-    while(((C2CON & _C2CON_OPMOD_MASK) >> _C2CON_OPMOD_POSITION) != CAN_OPERATION_MODE)
+    C2CONbits.REQOP = CAN_MODE_OPERATION;
+    while(C2CONbits.OPMOD != CAN_MODE_OPERATION)
     {
-        /* Do Nothing */
-    }
+    }    
 #endif
     
     (void)__builtin_enable_interrupts();
@@ -368,21 +359,6 @@ uint8_t CAN2_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIB
 
 
 
-/* @brief Sets the pointer to the function (and it's context) to be called when the
-    given CAN's receive transfer events occur.
- * @param callback - callback function pointer
- * @param contextHandle - loopback data pointer
- */
-void CAN2_RxCallbackRegister(CAN_CALLBACK callback, uintptr_t contextHandle)
-{
-    if (callback != NULL)
-    {
-        can2RxEventHandler = callback;
-        can2RxContextHandler = contextHandle;
-    }
-    return;
-}
-
 // *****************************************************************************
 // *****************************************************************************
 // Section: System Interrupt Vector definitions
@@ -396,10 +372,7 @@ void __ISR(_CAN2_VECTOR, IPL2AUTO) CAN2_Handler (void)
     if (C2INTbits.RBIF)
     {
         // callback event function
-        if (NULL != can2RxEventHandler)
-        {
-            can2RxEventHandler(can2RxContextHandler);
-        }
+        
     }
     
     /* Transmit Buffer Interrupt */
