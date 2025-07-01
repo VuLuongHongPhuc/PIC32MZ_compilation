@@ -35,7 +35,7 @@ void CAN2_ResetTxFIFO(void);
 void CAN2_ResetRxFIFO(void);
 uint8_t CAN2_Read(uint32_t *id, uint8_t *length, uint8_t *data, uint16_t *timestamp, CAN_MSG_RX_ATTRIBUTE *msgAttr);
 uint8_t CAN2_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIBUTE msgAttr);
-void CAN2_RxCallbackRegister(CAN_CALLBACK callback, uintptr_t contextHandle);
+
 
 
     /* Provide C++ Compatibility */

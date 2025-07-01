@@ -178,14 +178,14 @@ int main(void)
     (void) xTaskCreate((TaskFunction_t) STATISTIC_Task,
                 "Statistic",
                 256,
-                ( void * ) 1,
+                (void *) 1UL,
                 1,
                 (TaskHandle_t*)NULL );
     
     (void) xTaskCreate((TaskFunction_t) TEST_Task,
                 "TestApps",
-                512,
-                NULL,
+                1024,
+                (void *) 1UL,
                 1,
                 (TaskHandle_t*)NULL );
     

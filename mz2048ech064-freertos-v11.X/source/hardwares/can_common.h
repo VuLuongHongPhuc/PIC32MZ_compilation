@@ -80,11 +80,6 @@ extern "C" {
     } CAN_TX_RX_MSG_BUFFER;
 
 
-    /* @brief CAN callback function pointer
-     * @param contextHandle - loopback data
-     */
-    typedef void (*CAN_CALLBACK) (uintptr_t contextHandle);  
-
 
 
     /* Create a CMSGSID data type. */
