@@ -9,7 +9,7 @@
  * FIFO 1 : Receive  8 deep level -> 8x 4 words = 32 bytes
  * Interrupt mode
  * 
- * NOTE: blocked at change mode Configration mode to other mode
+ * NOTE: In conflict with CORETIMER - CoreTimer don't trigger at time
  */
 
 #include "xc.h"
@@ -22,57 +22,31 @@
 
 
 #define __EXTENDED_ID    1
-#define __LOOPBACK_MODE  0
 
 
-#define CAN_MESSAGE_RAM_TX_SIZE        8U   /* FIFO0 Max 32 */
-#define CAN_MESSAGE_RAM_RX_SIZE        8U   /* FIFO1 max 32 */
-#define CAN_MESSAGE_RAM_CONFIG_SIZE    (CAN_MESSAGE_RAM_TX_SIZE+CAN_MESSAGE_RAM_RX_SIZE)
+#define CAN_MESSAGE_RAM_TX_SIZE        8U       /* FIFO0 Max 32 */
+#define CAN_MESSAGE_RAM_RX_SIZE        8U       /* FIFO1 max 32 */
+#define CAN_MESSAGE_RAM_CONFIG_SIZE    (64U)    /* MAX for 2 channel FIFO */
 
 
 /* Allocate TX + RX message buffer size. */
-static CAN_TX_RX_MSG_BUFFER __attribute__((coherent, aligned(32))) can_message_buffer[CAN_MESSAGE_RAM_CONFIG_SIZE];
+static CAN_TX_RX_MSG_BUFFER __attribute__((coherent, aligned(32))) can2_message_buffer[CAN_MESSAGE_RAM_CONFIG_SIZE];
 
 
 
-static inline void SetBaudrate(void)
+static void SetBaudrate(void)
 {
-    /*
-     * Bit Rate = CAN Clock Frequency/ (BRP x Number of TQ)
-     * Number of TQ = 1 (SyncSeg) + PropSeg + PhaseSeg1 + PhaseSeg2
-     * we aim for 20 TQ per bit to have BRP value with an integer.
-     * => BRP=5, TQ=10
-     * 
-     * Sample Point = (SyncSeg + ProgSeg + PhaseSeg1) / Total TQ
-     * SyncSeg = 1 TQ (always)
-     * PropSeg+PhaseSeg1=(0.875�10)?1=16.5 => 16/17
-     * And then PhaseSeg2 = 3 TQ (since total is 20 TQ).
-     * You typically want PhaseSeg1 larger than PropSeg, so let's pick:
-     * PropSeg = 4 TQ
-     * PhaseSeg1 = 3 TQ
-     * PhaseSeg2 = 2 TQ
-     * => 4+3+2=6(Sample�at�9/10=85%)
-     * 
-     * SJW (synchronization jump width) can be 1?2 TQ, usually 1 or 2 is fine. Let's set SJW = 1.
-     */
-    
-    
-    C2CFGbits.BRP = 4;   // (BRP + 1) = 5 => BRP = 4
-    C2CFGbits.SJW = 1;   // SJW = 2 TQ
-
-    C2CFGbits.PRSEG = 3;  // PropSeg = PRSEG + 1 = 4 TQ
-    C2CFGbits.SEG1PH = 2; // PhaseSeg1 = SEG1PH + 1 = 3 TQ
-    C2CFGbits.SEG2PH = 1; // PhaseSeg2 = SEG2PH + 1 = 2 TQ
-    C2CFGbits.SAM = 0;    // 1 sample per bit
-    
-    //C2CFGbits.SEG2PHTS = 1; // auto?
+    /* predefine sampling point at 87.5% */
+    C2CFG = 0x00008604;  // 500 kbit/s
+    //C2CFG = 0x00008609;  // 250 kbit/s
 }
 
 
-static inline void CAN2_ZeroInitialize(volatile void* pData, size_t dataSize)
+static void CAN2_ZeroInitialize(volatile void* pData, size_t dataSize)
 {
+    uint32_t index;
     volatile uint8_t* data = (volatile uint8_t*)pData;
-    for (uint32_t index = 0; index < dataSize; index++)
+    for (index = 0; index < dataSize; index++)
     {
         data[index] = 0U;
     }
@@ -84,61 +58,49 @@ static inline void CAN2_ZeroInitialize(volatile void* pData, size_t dataSize)
 static void SetFIFO(void)
 {    
     /* Set Start address of MB0 in FIFO0 */
-    C2FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
+    C2FIFOBA = (uint32_t)KVA_TO_PA(can2_message_buffer);
             
-    /* Set Transmit FIFO size 8 */
+    /* Set Transmit FIFO */
     C2FIFOCON0bits.TXEN = 1;
     C2FIFOCON0bits.FSIZE = CAN_MESSAGE_RAM_TX_SIZE - 1U;
-    //C2FIFOCON0bits.UINC = 1; // head/tail?
         
-    /* Set FIFO1 Full Receive Message size 8*/
+    /* Set FIFO1 Full Receive Message */
     C2FIFOCON1bits.TXEN = 0;
     C2FIFOCON1bits.FSIZE = CAN_MESSAGE_RAM_RX_SIZE - 1U;
 }
 
 static void SetAcceptanceFilter(void)
 {
-    C2FLTCON0bits.FLTEN0 = 1; /* Enable filter 0*/
+    /*
+     * FLTEN0: Filter 0 Enable
+     * MSEL0<1:0>: 00 = Acceptance Mask 0 selected
+     * FSEL0<4:0>: 00001 = Message matching filter is stored in FIFO buffer 1 
+     */
     
-    /* Configure CAN Filters */
-    C2RXF0bits.SID = 0;
-    C2RXF0bits.EXID = 0;
-    C2RXF0bits.EID = 0;
-    
-    C2CONbits.DNCNT = 0; /* Do not compare data bytes */
-    
-    C2FLTCON0bits.FSEL0 = 1; // 1 = Message matching filter is stored in FIFO buffer 1
-    
-    /* Configure CAN Acceptance Filter Masks */
-    C2RXM0bits.SID = 0; 
-    C2RXM0bits.MIDE = 0;
-    C2RXM0bits.EID = 0;
-    //C2RXM0 = 0x3FFFFu | (0x01u << _C2RXM0_MIDE_POSITION) | (0x7FFu << _C2RXM0_SID_POSITION) /* mask 0x1FFFFFFF */
-    //C2RXM0 = (0x1FFFFFFFUL & _C2RXM0_EID_MASK) | (((0x1FFFFFFFU & 0x1FFC0000u) >> 18u) << _C2RXM0_SID_POSITION) | _C2RXM0_MIDE_MASK;
+     /* Filter/mask acceptance - accept ANY */
+    C2RXF0 = 0;
+    C2FLTCON0 = 0x81;
+    C2RXM0 = 0;
 }
 
-static void InitGPIO()
-{
-    /* Unlock system for PPS configuration */
-    SYSKEY = 0x00000000U;
-    SYSKEY = 0xAA996655U;
-    SYSKEY = 0x556699AAU;
-
+static void RemapPPS(void)
+{    
+    /* Mandatory - Set IO to digital */
+    ANSELBCLR = 1U<<0;  /* RB0 C2RXR pin.16 */
+    ANSELBCLR = 1U<<2;  /* RB2 RPB2R pin.14 */
+    
+    
+    /* Unlock Peripheral Pin. Writes to PPS registers are allowed */
     CFGCONbits.IOLOCK = 0U;
 
-    /* PPS Input Remapping C2RX */
-    C2RXR = 5;
-
-    /* PPS Output Remapping C2TX */
-    RPB2R = 15;
+    C2RXR = 0b0101;      /* PPS Input Remapping C2RX */    
+    RPB2R = 0b1111;     /* PPS Output Remapping C2TX */
 
     /* Lock back the system after PPS configuration */
-    CFGCONbits.IOLOCK = 1U;
-
-    SYSKEY = 0x00000000U;
+    //CFGCONbits.IOLOCK = 1U;
 }
 
-static void SetInterrupt()
+static void SetInterrupt(void)
 {
     C2INTbits.IVRIE = 1;  // Invalid Message Received Interrupt Enable bit
     //C2INTbits.CERRIE = 1; // CAN Bus Error Interrupt Enable bit
@@ -165,39 +127,45 @@ void CAN2_Initialize(void)
     
     (void)__builtin_disable_interrupts();
     
-    /* Remap GPIO */
-    InitGPIO();
-    
+    RemapPPS();
+
     /* Switch the CAN module ON */
     C2CONSET = _C2CON_ON_MASK;
+    
     
     /* At reset, normally on configuration mode */
     /* Switch the CAN module to Configuration mode. Wait until the switch is complete */
     C2CONbits.REQOP = CAN_MODE_CONFIGURATION;
     while (C2CONbits.OPMOD != CAN_MODE_CONFIGURATION)
     {
-        /* Do nothing - wait */
     }
     
+    
     SetBaudrate();
+    
+    
     SetFIFO();
-    SetInterrupt();   
+    
+    
+    SetAcceptanceFilter();
+    
+    
+    //SetInterrupt();   
 
-#if (__LOOPBACK_MODE == 1)
-    C2CONbits.REQOP = CAN_MODE_LOOPBACK;
-    while(C2CONbits.OPMOD != CAN_MODE_LOOPBACK)
-    {
-        /* Do Nothing */
-    }
-#else
+
     /* The CAN module can now be placed into normal mode if no further */
     C2CONbits.REQOP = CAN_MODE_OPERATION;
     while(C2CONbits.OPMOD != CAN_MODE_OPERATION)
     {
-    }    
-#endif
+    }
     
-    (void)__builtin_enable_interrupts();
+        
+           
+    
+
+    
+    (void)__builtin_enable_interrupts();        
+    
 }
 
 void CAN2_Enable(void)
@@ -209,8 +177,8 @@ void CAN2_Enable(void)
 void CAN2_Disable(void)
 {
     /* Place the CAN module in Configuration mode. */
-    C2CONbits.REQOP = 4;         /* Request enter configuration mode */
-    while(C2CONbits.OPMOD != 4); /* Wait mode change */
+    C2CONbits.REQOP = CAN_MODE_CONFIGURATION;         /* Request enter configuration mode */
+    while(C2CONbits.OPMOD != CAN_MODE_CONFIGURATION); /* Wait mode change */
     
     /* Switch the CAN module off. */
     C2CONCLR = 0x00008000;          /* Clear the ON bit */
@@ -311,14 +279,14 @@ uint8_t CAN2_Read(uint32_t *id, uint8_t *length, uint8_t *data, uint16_t *timest
 
 uint8_t CAN2_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIBUTE msgAttr)
 {
-    uint8_t count = 0;
+    uint8_t i = 0;
     CAN_TX_RX_MSG_BUFFER *txMessage = NULL; /* Points to message buffer to be written */
     
     /* Get the address of the message buffer to write to from the C1FIFOUA0 */
     /* register. Convert this physical address to virtual address. */
     txMessage = (CAN_TX_RX_MSG_BUFFER *)PA_TO_KVA1(C2FIFOUA0);
 
-    if (C2FIFOINT0bits.TXNFULLIF == 0)
+    if (C2FIFOINT0bits.TXNFULLIF)
     {
 #if (__EXTENDED_ID == 1)
         txMessage->msgSID = (id & CAN_MSG_EID_MASK) >> 18;
@@ -334,20 +302,19 @@ uint8_t CAN2_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIB
         }
         else
         {
-            if (length > 8U)
-            {
-                length = 8U;
-            }
-            txMessage->msgEID |= length;
+            txMessage->msgEID |= (length & CAN_MSG_DLC_MASK);
 
-            while(count < length)
+            /* Fixe n copy */
+            for (i=0; i<8; i++)
             {
-                txMessage->msgData[count++] = *data++;
+                txMessage->msgData[i] = data[i];
             }
         }
 
-        //C2FIFOCON0SET = 0x2008; /* Set the UINC and TXREQ bit */
-        C2FIFOCON0SET = _C2FIFOCON0_UINC_MASK | _C2FIFOCON0_TXREQ_MASK;
+        /* Set the UINC and TXREQ bit */
+        //C2FIFOCON0SET = _C2FIFOCON0_UINC_MASK | _C2FIFOCON0_TXREQ_MASK;        
+        C2FIFOCON0SET = _C2FIFOCON0_UINC_MASK;
+        C2FIFOCON0SET = _C2FIFOCON0_TXREQ_MASK;
         
         return 1;
     }
@@ -371,8 +338,7 @@ void __ISR(_CAN2_VECTOR, IPL2AUTO) CAN2_Handler (void)
     /* Receive buffer interrupt */
     if (C2INTbits.RBIF)
     {
-        // callback event function
-        
+        // callback event function        
     }
     
     /* Transmit Buffer Interrupt */
