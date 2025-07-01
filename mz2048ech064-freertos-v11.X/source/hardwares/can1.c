@@ -3,15 +3,13 @@
  * pin.5  C1RX  RG7
  * Bit rate : 500 Kbps
  * sample at 87.5%
- * Baudrate prescaler : 4
- * propagation segment time (ns) : 800
- * FIFO 0 : Transmit 8 deep level
- * FIFO 1 : Receive  8 deep level
- * Interrupt mode
+ *
+ * FIFO 0 : Transmit
+ * FIFO 1 : Receive
+ * Interrupt on
  * 
  * NOTE: 
- *  - Blocked at change mode Configration mode to other mode if Transceiver 
- *    CAN not connected
+ * 
  */
 
 #include "xc.h"
@@ -23,15 +21,13 @@
 #include "gpio.h"
 
 
-#define CAN_FIFO_OFFSET              (0x10U)
-
 #define __EXTENDED_ID    1
 
 
 
-#define CAN_MESSAGE_RAM_TX_SIZE        8U   /* FIFO0 Max 32 */
-#define CAN_MESSAGE_RAM_RX_SIZE        8U   /* FIFO1 max 32 */
-#define CAN_MESSAGE_RAM_CONFIG_SIZE    (64) /* MAX for 2 channel FIFO */
+#define CAN_MESSAGE_RAM_TX_SIZE        32U   /* FIFO0 Max 32 */
+#define CAN_MESSAGE_RAM_RX_SIZE        32U   /* FIFO1 max 32 */
+#define CAN_MESSAGE_RAM_CONFIG_SIZE    (64U) /* MAX for 2 channel FIFO */
 
 
 /* Allocate TX + RX message buffer size. */
@@ -46,15 +42,17 @@ static void SetBaudrate(void)
     C1CFGbits.SJW = 1;   // SJW <= SEG2PH
 
     C1CFGbits.PRSEG = 0;  // PropSeg = PRSEG + 1 = n TQ
-    C1CFGbits.SEG1PH = 5; // PhaseSeg1 = SEG1PH + 1 = n TQ
-    C1CFGbits.SEG2PH = 1; // PhaseSeg2 = SEG2PH + 1 = n TQ
+    C1CFGbits.SEG1PH = ; // PhaseSeg1 = SEG1PH + 1 = n TQ
+    C1CFGbits.SEG2PH = ; // PhaseSeg2 = SEG2PH + 1 = n TQ
     C1CFGbits.SAM = 0;    // 1 sample per bit
     
     C2CFGbits.SEG2PHTS = 1;
     // WAKFIL = 0
 #endif
     
-    C1CFG = 0x00008604;
+    /* predefine sampling point at 87.5% */
+    C1CFG = 0x00008604;  // 500 kbit/s
+    //C1CFG = 0x00008609;  // 250 kbit/s
 }
 
 /**
@@ -64,13 +62,14 @@ static void SetFIFO(void)
 {    
     /* Set Start address of MB0 in FIFO0 */
     C1FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
-            
-    /* Set Transmit FIFO size 8 */
+    
+    
+    /* Set FIFO0 -> Transmit message */
     C1FIFOCON0bits.TXPRI = 0;
     C1FIFOCON0bits.TXEN = 1;
     C1FIFOCON0bits.FSIZE = CAN_MESSAGE_RAM_TX_SIZE - 1U;
         
-    /* Set FIFO1 Full Receive Message size 8*/
+    /* Set FIFO1 -> Receive Message */
     C1FIFOCON1bits.TXPRI = 0;
     C1FIFOCON1bits.TXEN = 0;
     C1FIFOCON1bits.FSIZE = CAN_MESSAGE_RAM_RX_SIZE - 1U;
@@ -78,28 +77,23 @@ static void SetFIFO(void)
 
 static void SetAcceptanceFilter(void)
 {
-    /* filter/mask acceptance */
-    C1RXF0 = 0;
-    
     /*
      * FLTEN0: Filter 0 Enable
      * MSEL0<1:0>: 00 = Acceptance Mask 0 selected
      * FSEL0<4:0>: 00001 = Message matching filter is stored in FIFO buffer 1 
      */
-    //C1FLTCON0 = (1U<<CAN_CiFLTCONx_FLTEN0_pos) | (1U<<CAN_CiFLTCONx_FSEL0_pos);
-    C1FLTCON0 = 0x81;
-    //C1FLTCON0bits.FLTEN0 = 1;
-    //C1FLTCON0bits.FSEL0 = 1;
     
-    /* filter/mask acceptance */    
+    /* Filter/mask acceptance - accept ANY */
+    C1RXF0 = 0;
+    C1FLTCON0 = 0x81; 
     C1RXM0 = 0;
-    
-    /* Do not compare data bytes */
-    //C1CONbits.DNCNT = 0; 
 }
 
-void CAN1_RemapPPS(void)
-{
+static void RemapPPS(void)
+{    
+    /* Mandatory - set IO to digital */
+    ANSELGCLR = 1U<<7;  /* C1RX */
+    ANSELGCLR = 1U<<8;  /* C1TX */
     
     /* Unlock Peripheral Pin. Writes to PPS registers are allowed */
     CFGCONbits.IOLOCK = 0U;
@@ -116,16 +110,28 @@ void CAN1_RemapPPS(void)
 static void SetInterrupt(void)
 {
     /*
-     * CiINT : CAN INTERRUPT REGISTER
+     * CiVEC  : CAN INTERRUPT CODE REGISTER
+     * CiINT  : CAN INTERRUPT REGISTER
+     * CiTREC : CAN TRANSMIT/RECEIVE ERROR COUNT REGISTER
+     * CiFSTAT: CAN FIFO STATUS REGISTER
+     * CiFIFOINTn : CAN FIFO INTERRUPT REGISTER (n = 0 THROUGH 31)
+     * 
+     * NOTE : CiINT bind with CiFIFOINTn 
      */
-    C1INTbits.IVRIE = 1;  // Invalid Message Received Interrupt Enable bit
+    
+    //C1INTbits.IVRIE = 1;  // Invalid Message Received Interrupt Enable bit
     //C1INTbits.CERRIE = 1; // CAN Bus Error Interrupt Enable bit
     //C1INTbits.SERRIE = 1; // System Error Interrupt Enable bit
     //C1INTSET = _C1INT_TBIE_MASK; /* Enable Transmit Buffer Interrupt */
-    C1INTSET = _C1INT_RBIE_MASK; /* Enable Receive Buffer Interrupt */
+    C1INTSET = _C1INT_RBIE_MASK;    /* Enable Receive Buffer Interrupt */
+    //C1INTSET = _C1INT_RBOVIE_MASK;  /* Enable Receive Buffer Overflow Interrupt */
+    
+    C1FIFOINT1bits.RXNEMPTYIE = 1;      /* Interrupt enabled for FIFO not empty */
+    //C1FIFOINT1bits.RXHALFIE = 1;        /* Enable FIFO Half Full Interrupt */
+    //C1FIFOINT1bits.RXOVFLIE = 1;
     
     IPC37bits.CAN1IP = 2;  /* Interrupt priority */
-    IPC37bits.CAN1IS = 1;  /* Interrupt sub-priority */
+    IPC37bits.CAN1IS = 0;  /* Interrupt sub-priority */
     
     IEC4SET = _IEC4_CAN1IE_MASK; /* Enable CAN interrupt vector */
 }
@@ -167,16 +173,10 @@ void CAN1_Initialize(void)
     }
 #endif
     
-    volatile uint32_t int_status;
-    int_status = __builtin_disable_interrupts();
+    volatile uint32_t status;
+    status = __builtin_disable_interrupts();
     
 
-    /* Mandatory - set IO to digital */
-    ANSELGCLR = 1U<<7;  /* C1RX */
-    ANSELGCLR = 1U<<8;  /* C1TX */
-
-    
-    
     /* Switch the CAN module ON */
     C1CONSET = _C1CON_ON_MASK;
     
@@ -188,42 +188,30 @@ void CAN1_Initialize(void)
     {        
     }
     
-    /* Set baudrate*/
-    C1CFG = 0x00008604;  // 500 kbit/s
-    //C1CFG = 0x00008609;  // 250 kbit/s
+    
+    SetBaudrate();
     
     
-    /* Set Start address of MB0 in FIFO0 */
-    C1FIFOBA = (uint32_t)KVA_TO_PA(can_message_buffer);
+    SetFIFO();
     
     
-    /* Set Transmit FIFO size 8 */
-    C1FIFOCON0bits.TXPRI = 0;
-    C1FIFOCON0bits.TXEN = 1;
-    C1FIFOCON0bits.FSIZE = CAN_MESSAGE_RAM_TX_SIZE - 1U;
-        
-    /* Set FIFO1 Full Receive Message size 8*/
-    C1FIFOCON1bits.TXPRI = 0;
-    C1FIFOCON1bits.TXEN = 0;
-    C1FIFOCON1bits.FSIZE = CAN_MESSAGE_RAM_RX_SIZE - 1U;
+    SetAcceptanceFilter();
     
     
-    /* Filter/mask acceptance */
-    C1RXF0 = 0;
-    C1FLTCON0 = 0x81; 
-    C1RXM0 = 0;
+    /* don't work */
+    SetInterrupt();
 
-    //SetInterrupt();
-
+    
     /* The CAN module can now be placed into normal mode if no further */
     C1CONbits.REQOP = CAN_MODE_OPERATION;
     while(C1CONbits.OPMOD != CAN_MODE_OPERATION)
     {        
     }
     
-    CAN1_RemapPPS();
+    RemapPPS();
     
-    if (int_status)
+    
+    if (status)
     {
         __builtin_enable_interrupts();        
     }
@@ -249,14 +237,14 @@ void CAN1_Enable(void)
 void CAN1_Disable(void)
 {
     /* Place the CAN module in Configuration mode. */
-    C1CONbits.REQOP = 4;         /* Request enter configuration mode */
-    while(C1CONbits.OPMOD != 4); /* Wait mode change */
+    C1CONbits.REQOP = CAN_MODE_CONFIGURATION;         /* Request enter configuration mode */
+    while(C1CONbits.OPMOD != CAN_MODE_CONFIGURATION); /* Wait mode change */
     
     /* Switch the CAN module off. */
-    C2CONCLR = 0x00008000;          /* Clear the ON bit */
+    C1CONCLR = _C1CON_ON_MASK;          /* Clear the ON bit */
     while(C1CONbits.CANBUSY == 1);  /* Wait for CAN off - advisor */
     
-    /* - Auto release device control on C2TX/C2RX pins
+    /* - Auto release device control on C1TX/C1RX pins
      * - Place CAN module into reset
      * - All FIFO message is reset
      */
@@ -266,7 +254,7 @@ void CAN1_Disable(void)
  */
 void CAN1_ResetTxFIFO(void)
 {
-    /* Reset CAN2 FIFO0 */
+    /* Reset CAN1 FIFO0 */
     C1FIFOCON0SET = 0x00004000; /* Set the FRESET bit */
     while(C1FIFOCON0bits.FRESET == 1);
 }
@@ -371,12 +359,7 @@ uint8_t CAN1_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIB
         }
         else
         {
-            if (length > 8U)
-            {
-                length = 8U;
-            }
-            
-            txMessage->msgEID |= length;
+            txMessage->msgEID |= (length & CAN_MSG_DLC_MASK);
 
             /* Fixe n copy */
             for (i=0; i<8; i++)
@@ -395,35 +378,56 @@ uint8_t CAN1_Write(uint32_t id, uint8_t length, uint8_t* data, CAN_MSG_TX_ATTRIB
     return 0;
 }
 
+
+
+/*******************************************************************************
+* Section: System Interrupt Vector definitions
+*******************************************************************************/
+
 __attribute__((weak)) void CAN1_ReceiveCallback(void)
 {
+    uint32_t id = 0;
+    uint8_t length = 0;
+    uint8_t data[8] = {0};
+    CAN_MSG_RX_ATTRIBUTE msgAttr;
+    
+    if (CAN1_Read(&id, &length, data, NULL, &msgAttr))
+    {
+        LED_1_Toggle();
+    }
 }
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: System Interrupt Vector definitions
-// *****************************************************************************
-// *****************************************************************************
-void __ISR(_CAN1_VECTOR, IPL2AUTO) CAN1_Handler (void)
+void __ISR(_CAN1_VECTOR, IPL2AUTO) _InterruptCan1Handler (void)
 {
     /*
      * CiVEC : CAN INTERRUPT CODE REGISTER
      * CiINT: CAN INTERRUPT REGISTER
      * CiTREC: CAN TRANSMIT/RECEIVE ERROR COUNT REGISTER
      * CiFSTAT: CAN FIFO STATUS REGISTER
+     * CiFIFOINTn : CAN FIFO INTERRUPT REGISTER (n = 0 THROUGH 31) 
      */
+    
     
     /* Receive buffer interrupt */
     if (C1INTbits.RBIF)
     {
-        // callback event function
-        CAN1_ReceiveCallback();
+        /* FIFO1 interrupt */
+        if (C1VEC & 0b0000001)
+        {
+            if (C1FSTAT & 0x0002)
+            {
+                // callback event function
+                CAN1_ReceiveCallback();
+            }
+        }
     }
     
+  
     /* Transmit Buffer Interrupt */
     if (C1INTbits.TBIF)
     {
     }
+
     
     IFS4CLR = _IFS4_CAN1IF_MASK;
 }
