@@ -198,7 +198,6 @@ void CAN1_Initialize(void)
     SetAcceptanceFilter();
     
     
-    /* don't work */
     SetInterrupt();
 
     

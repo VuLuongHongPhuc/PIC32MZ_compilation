@@ -33,7 +33,7 @@
 
 
 // ~40 char per task
-#define DEF_TASKS_COUNT     (5) // IDLE (default), tmr (default), Main_Tasks, Statistic_Tasks, display_task
+#define DEF_TASKS_COUNT     (5) // IDLE (default), tmr (default if use), Main_Tasks, Statistic_Tasks, Test_task, ...
 #define DEF_BUF_SIZE        (40*DEF_TASKS_COUNT)
 
 /* ************************************************************************** */
@@ -50,7 +50,7 @@ volatile unsigned long ulHighFrequencyTimerTicks;
 /* ************************************************************************** */
 /* ************************************************************************** */
 
-void TMR3_EventHandler(uint32_t status, uintptr_t context)
+static void TMR3_EventHandler(uint32_t status, uintptr_t context)
 {
     // dummy
     (void)status;
@@ -86,7 +86,7 @@ void STATISTIC_Task( void *pvParameters )
 {
     configASSERT( ( uint32_t ) pvParameters == 1UL );
     
-    static char pcWriteBuffer[DEF_BUF_SIZE] = {0};
+    //static char pcWriteBuffer[DEF_BUF_SIZE] = {0};
     
     Initialize();
     
@@ -98,7 +98,8 @@ void STATISTIC_Task( void *pvParameters )
         /* Get the statistic of every task during the periode */
         //vTaskGetRunTimeStats( (char*)&pcWriteBuffer[0] );
         
-        // TODO: display result via UART        
+        // TODO: display result via UART
+        
     }
 }
 

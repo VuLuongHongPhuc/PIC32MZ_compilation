@@ -59,7 +59,7 @@ void ThreadSerial()
         }
 
         Sleep(100); // Sleep to avoid busy waiting
-#if 1
+#if 0
         if (countRx++ > 20)
         {
             // Example of sending data

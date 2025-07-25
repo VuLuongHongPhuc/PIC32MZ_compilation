@@ -50,7 +50,7 @@ void TMR3_Initialize(void)
     TMR3 = 0x0;
 
     /* Set period */
-    PR3 = 311U;
+    PR3 = 311U;     /* PR3 = ((PBCLK3/prescaler) x 50us ) - 1 */
 
     /* Interrupt priority p.116 */
     IPC3bits.T3IP = 1;  // Set timer interrupt priority

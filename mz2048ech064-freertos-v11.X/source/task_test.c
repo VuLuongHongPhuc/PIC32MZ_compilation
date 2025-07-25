@@ -6,10 +6,13 @@
 #include "uart1.h"
 #include "can1.h"
 #include "trng.h"
+#include "dma.h"
+
 
 static void TestCan(void);
 static void TestRng(void);
 static void TestUart(void);
+static void TestDmaUart(void);
 
 
 
@@ -35,6 +38,9 @@ void TEST_Task( void *pvParameters )
     LED_2_Clear();
     //LED_3_Clear(); // use by main task
     
+    static uint8_t oneT = 0;
+    
+    
     while (1)
     {
         /* Delay to let the system run tasks */
@@ -42,8 +48,26 @@ void TEST_Task( void *pvParameters )
 
         //TestCan();
         //TestRng();
-        TestUart();
+        //TestUart();
         
+        if (oneT == 0)
+        {
+            oneT = 1;
+            TestDmaUart();
+        }
+    }
+}
+
+void TestDmaUart(void)
+{
+    //if ( !DMACONbits.DMABUSY )
+    if ( !DCH0CONbits.CHBUSY )
+    {
+        DMA_Initialize();
+        
+        LED_2_Toggle();
+        
+        DCH0ECONbits.CFORCE = 1; /* force transfert */
     }
 }
 
@@ -59,6 +83,7 @@ void TestRng(void)
 
 static void TestCan(void)
 {
+#if 1
     uint32_t id = 0x1A001023;
     uint8_t length = 2;
     uint8_t data[8] = {0x31, 0x33, 2, 3, 4, 5, 6};
@@ -67,16 +92,7 @@ static void TestCan(void)
     
     
     (void)CAN1_Write(id, length, data, msgAttr);
-    LED_1_Set();
-    
-
-    CAN_MSG_RX_ATTRIBUTE msgRxAttr = CAN_MSG_RX_DATA_FRAME;
-    (void)CAN1_Read(&id, &length, data, NULL, &msgRxAttr);
-    if (msgAttr == CAN_MSG_RX_DATA_FRAME)
-    {
-        LED_1_Clear();
-    }
-
+#endif
 }
 
 static void TestUart(void)

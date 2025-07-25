@@ -121,10 +121,17 @@
 #include "task_statistic.h"
 #include "task_display.h"
 #include "task_test.h"
+#include "task_config.h"
 
 
-/* Variables ********************************************************/
+/*** Variables ************        ********************************************/
 extern TaskHandle_t xTask_Main;
+
+
+/*** Functions prototype   ****************************************************/
+
+
+
 
 
 /* This function is called at specified periodic interval */
@@ -153,45 +160,46 @@ int main(void)
     SYS_Initialize();                /* system */
     GPIO_init();                     /* GPIO */
     CORETIMER_Initialize(1000);      /* CORE timer */
-    TMR2_Initialize();               /* timers 2 */
+    //TMR2_Initialize();               /* timers 2 */
     
     /*** Set callback */
     CORETIMER_CallbackRegister(CORETIMER_EventHandler, (uintptr_t) NULL); /* CORETIMER Register */
-    TMR2_CallbackRegister(TMR2_EventHandler, (uintptr_t) NULL);           /* TIM Register */
+    //TMR2_CallbackRegister(TMR2_EventHandler, (uintptr_t) NULL);           /* TIM Register */
     
     /* start timers */
-    TMR2_Start();
+    //TMR2_Start();
     
     /*** RTOS section */
     
     // static task create
     // https://www.freertos.org/a00110.html#configKERNEL_PROVIDED_STATIC_MEMORY
     
-        
-    (void) xTaskCreate((TaskFunction_t) MAIN_Task,  /*!< Pointer to the task entry function */
-                "Main",                              /*!< Task name */
-                1024,                                /*!< Stack size (not bytes!) -> system 32bits => 1024 x4 = 4096 bytes */
+   
+
+    (void) xTaskCreate((TaskFunction_t) MAIN_Task,   /*!< Pointer to the task entry function */
+                DEF_TASK_DEBUG_NAME_MAIN,            /*!< Task name */
+                DEF_TASK_STACKSIZE_MAIN,             /*!< Stack size (not bytes!) -> system 32bits => 1024 x4 = 4096 bytes */
                 NULL,                                /*!< Parameter */
-                configMAX_PRIORITIES - 1,            /*!< Task priority level */
+                DEF_TASK_PRIORITY_MAIN,              /*!< Task priority level */
                 &xTask_Main);                        /*!< Used to pass a handle to the created task out of the xTaskCreate() function */
     
     (void) xTaskCreate((TaskFunction_t) STATISTIC_Task,
-                "Statistic",
-                256,
+                DEF_TASK_DEBUG_NAME_STATISTIC,
+                DEF_TASK_STACKSIZE_STATISTIC,
                 (void *) 1UL,
-                1,
+                DEF_TASK_PRIORITY_STATISTIC,
                 (TaskHandle_t*)NULL );
     
     (void) xTaskCreate((TaskFunction_t) TEST_Task,
-                "TestApps",
-                1024,
+                DEF_TASK_DEBUG_NAME_TEST,
+                DEF_TASK_STACKSIZE_TEST,
                 (void *) 1UL,
-                1,
+                DEF_TASK_PRIORITY_TEST,
                 (TaskHandle_t*)NULL );
+  
     
-    
-#define DISPLAY_ILI9341 0
-#if (DISPLAY_ILI9341 == 1)    
+
+#if 0
     (void) xTaskCreate((TaskFunction_t) DISPLAY_Task,
                 "Display",
                 256,
@@ -216,6 +224,29 @@ int main(void)
     return ( EXIT_FAILURE );
 }
 
+#if 0
+void CreateTasks(void)
+{
+    TaskHandle_t ret_task = NULL;
+    
+    static StaticTask_t xMainTask;
+    static StackType_t uxMainTaskStack[DEF_TASK_STACKSIZE_MAIN] = {0};
+    
+    ret_task = xTaskCreateStatic((TaskFunction_t) MAIN_Task,    /* Pointer to the task entry function */
+                             DEF_TASK_DEBUG_NAME_MAIN,          /* Task name */
+                             DEF_TASK_STACKSIZE_MAIN,           /* Stack size (not bytes!) -> system 32bits => size x4 = n bytes */
+                             (void *) 1UL,                      /* Parameter */
+                             DEF_TASK_PRIORITY_MAIN,            /* Task priority level */
+                             &( uxMainTaskStack[0] ),           /* Stack buffer */
+                             &( xMainTask ));                   /* Used to pass a handle to the created task out of the xTaskCreate() function */
+
+    if (ret_task == NULL)
+    {
+        //ErrorBuild();
+        
+    }
+}
+#endif
 
 /* *****************************************************************************
  End of File

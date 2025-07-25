@@ -27,7 +27,7 @@
 #include "gpio.h"
 
 
-#define __UART1_INT_TX_ENABLE__     0
+#define __UART1_INT_TX_ENABLE__     1
 #define __UART1_INT_RX_ENABLE__     1
 #define __UART1_INT_FAULT_ENABLE__  0
 

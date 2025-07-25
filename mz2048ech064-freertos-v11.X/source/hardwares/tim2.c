@@ -83,7 +83,7 @@ void TMR2_Initialize(void)
     TMR2 = 0x0;
 
     /* Set period */
-    PR2 = 1561U;
+    PR2 = 1561U;    /* PR2 = ((PBCLK/prescaler) x 1ms ) - 1 */
 
     /* Interrupt priority p.116 */
     IPC2bits.T2IP = 1;  /*!< Set timer interrupt priority */

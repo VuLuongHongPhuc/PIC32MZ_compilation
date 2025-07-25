@@ -43,7 +43,7 @@
  * See http://www.freertos.org/a00110.html
  *----------------------------------------------------------*/
 
-//#define configCPU_CLOCK_HZ                      60000000
+//#define configCPU_CLOCK_HZ                      60000000 /* Unused - Timer 1 dedicated */
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 1
@@ -53,7 +53,7 @@
 #define configMINIMAL_STACK_SIZE                ( 128 )
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configSUPPORT_STATIC_ALLOCATION         0
-#define configTOTAL_HEAP_SIZE                   ( ( size_t ) (12*1024) )
+#define configTOTAL_HEAP_SIZE                   ( ( size_t ) (16*1024) )
 #define configMAX_TASK_NAME_LEN                 ( 16 )
 #define configUSE_16_BIT_TICKS                  0
 #define configIDLE_SHOULD_YIELD                 1
@@ -66,6 +66,11 @@
 #define configUSE_TIME_SLICING                  1
 #define configUSE_NEWLIB_REENTRANT              0
 #define configUSE_TASK_FPU_SUPPORT              0
+
+#if configSUPPORT_STATIC_ALLOCATION == 1
+    #define configKERNEL_PROVIDED_STATIC_MEMORY 1
+    #define portUSING_MPU_WRAPPERS              0
+#endif
 
 
 /* Hook function related definitions. */
