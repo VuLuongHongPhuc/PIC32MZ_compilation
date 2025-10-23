@@ -34,6 +34,8 @@
       <itemPath>source/hardwares/uart1.c</itemPath>
       <itemPath>source/hardwares/dma.c</itemPath>
       <itemPath>source/hardwares/dma.h</itemPath>
+      <itemPath>source/hardwares/led.c</itemPath>
+      <itemPath>source/hardwares/led.h</itemPath>
     </logicalFolder>
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"

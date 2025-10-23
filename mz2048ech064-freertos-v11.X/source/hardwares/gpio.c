@@ -8,15 +8,7 @@ void GPIO_init(void)
 {
 /*** Set mode : input/output **************************************************/
 
-    /* LED */
-    LED_1_OutputEnable(); // Ambre
-    LED_2_OutputEnable(); // Green
-    LED_3_OutputEnable(); // Blue
     
-    /* LED default init */
-    LED_1_Set(); // Ambre
-    LED_2_Set(); // Green
-    LED_3_Set(); // Blue
     
     
     /* OUTPUT */
@@ -24,7 +16,7 @@ void GPIO_init(void)
     // switch speed ?
     
     /* SWITCH / BUTTON */
-    ANSELEbits.ANSE5 = AD_DIGITAL;
+    ANSELEbits.ANSE5 = IO_DIGITAL;
     TRISEbits.TRISE5 = INPUT_PIN;
     CNPUEbits.CNPUE5 = CNPU_PULLUP_ENABLE;
    

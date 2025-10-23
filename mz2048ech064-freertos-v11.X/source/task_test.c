@@ -3,11 +3,18 @@
 #include "task.h"
 
 #include "gpio.h"
+#include "led.h"
 #include "uart1.h"
 #include "can1.h"
 #include "trng.h"
 #include "dma.h"
 
+
+
+/********************* Variables **********************************************/
+
+
+/********************* Prototypes *********************************************/
 
 static void TestCan(void);
 static void TestRng(void);
@@ -34,12 +41,13 @@ void TEST_Task( void *pvParameters )
     
     Initialize();
     
+    
     LED_1_Clear();
     LED_2_Clear();
     //LED_3_Clear(); // use by main task
     
-    static uint8_t oneT = 0;
     
+    //TestDmaUart();
     
     while (1)
     {
@@ -49,12 +57,8 @@ void TEST_Task( void *pvParameters )
         //TestCan();
         //TestRng();
         //TestUart();
-        
-        if (oneT == 0)
-        {
-            oneT = 1;
-            TestDmaUart();
-        }
+        TestDmaUart();
+        LED_1_Toggle();
     }
 }
 
@@ -64,8 +68,6 @@ void TestDmaUart(void)
     if ( !DCH0CONbits.CHBUSY )
     {
         DMA_Initialize();
-        
-        LED_2_Toggle();
         
         DCH0ECONbits.CFORCE = 1; /* force transfert */
     }

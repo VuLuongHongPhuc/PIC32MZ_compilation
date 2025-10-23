@@ -392,7 +392,7 @@ __attribute__((weak)) void CAN1_ReceiveCallback(void)
     
     if (CAN1_Read(&id, &length, data, NULL, &msgAttr))
     {
-        LED_1_Toggle();
+        
     }
 }
 

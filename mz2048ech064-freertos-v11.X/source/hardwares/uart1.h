@@ -15,8 +15,8 @@
  */
 /* ************************************************************************** */
 
-#ifndef _EXAMPLE_FILE_NAME_H    /* Guard against multiple inclusion */
-#define _EXAMPLE_FILE_NAME_H
+#ifndef _UART1_H    /* Guard against multiple inclusion */
+#define _UART1_H
 
 
 /* ************************************************************************** */
@@ -46,7 +46,7 @@ void UART1_Initialize(void);
 }
 #endif
 
-#endif /* _EXAMPLE_FILE_NAME_H */
+#endif /* _UART1_H */
 
 /* *****************************************************************************
  End of File

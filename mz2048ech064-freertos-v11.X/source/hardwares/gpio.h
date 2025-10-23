@@ -64,44 +64,15 @@ extern "C" {
     #define CNPU_PULLUP_DISABLE 0
 
     /* ANALOG / DIGITAL : ANSELx*/
-    #define AD_DIGITAL 0
-    #define AD_ANALOG  1
+    #define IO_DIGITAL 0
+    #define IO_ANALOG  1
     
     
     
-/**** LED *****************************************************************/
+/**** GPIO *****************************************************************/
 /* TRISx, LATx, */ 
     
 
-//pin 38 RF3 - also use for USBID -> need to desactivate to use in I/O mode
-#define LED_1       LATFbits.LATF3  // ambre
-//#define LED_1_Port_Mask  0x0008 // bit.3
-#define PIN_F3_Mask               (1U<<3) // bit.3
-#define LED_1_OutputEnable()      (TRISFCLR = (1U<<3))
-#define LED_1_InputEnable()       (TRISFSET = (1U<<3))
-#define LED_1_Set()               (LATFSET  = PIN_F3_Mask)
-#define LED_1_Clear()             (LATFCLR  = PIN_F3_Mask)
-#define LED_1_Toggle()            (PORTFINV = PIN_F3_Mask)
-#define LED_1_Get()               ((PORTF >> 3) & 0x1U)
-
-
-//pin 41 RF4
-#define PIN_F4_Mask               (1U<<4) // bit.4
-#define LED_2_OutputEnable()      (TRISFCLR = PIN_F4_Mask)
-#define LED_2_InputEnable()       (TRISFSET = PIN_F4_Mask)
-#define LED_2_Set()               (LATFSET  = PIN_F4_Mask)
-#define LED_2_Clear()             (LATFCLR  = PIN_F4_Mask)
-#define LED_2_Toggle()            (PORTFINV = PIN_F4_Mask)
-#define LED_2_Get()               ((PORTF >> 4) & 0x1U)
-
-
-//pin 42 RF5
-#define LED_3_OutputEnable()      (TRISFbits.TRISF5 = OUTPUT_PIN)
-#define LED_3       LATFbits.LATF5  // blue
-#define LED_3_Set()     (LED_3 = 1)
-#define LED_3_Clear()   (LED_3 = 0)
-#define LED_3_Toggle()  (LED_3 ^= 1)
-    
     
 //RB10
 #define RB10_Mask                (1U<<10)
@@ -122,10 +93,10 @@ extern "C" {
 #define SW1_Read()  SW1
     
 /*** ILI9143 screen 240x320 ***************************************************/
-#define RD9_Mask                (1U << 9)
-#define SPI_CS_OutputEnable()   (TRISDCLR = RD9_Mask)
-#define SPI_CS_Set()            (LATDSET  = RD9_Mask)
-#define SPI_CS_Clear()          (LATDCLR  = RD9_Mask)
+#define RD9_Mask                  (1U << 9)
+#define SPI_CS_OutputEnable()     (TRISDCLR = RD9_Mask)
+#define SPI_CS_Set()              (LATDSET  = RD9_Mask)
+#define SPI_CS_Clear()            (LATDCLR  = RD9_Mask)
 
 #define RD10_Mask                 (1U << 10)
 #define SPI_Reset_OutputEnable()  (TRISDCLR = RD10_Mask)
@@ -137,10 +108,10 @@ extern "C" {
 #define SPI_DC_Set()              (LATDSET  = RD11_Mask)
 #define SPI_DC_Clear()            (LATDCLR  = RD11_Mask)
     
-#define RD0_Mask                   (1U << 0)
-#define SPI_LED_OutputEnable()     (TRISDCLR = RD0_Mask)
-#define SPI_LED_Set()              (LATDSET  = RD0_Mask)
-#define SPI_LED_Clear()            (LATDCLR  = RD0_Mask) 
+#define RD0_Mask                  (1U << 0)
+#define SPI_LED_OutputEnable()    (TRISDCLR = RD0_Mask)
+#define SPI_LED_Set()             (LATDSET  = RD0_Mask)
+#define SPI_LED_Clear()           (LATDCLR  = RD0_Mask) 
     
 /**** Global Function *********************************************************/
     void GPIO_init(void);

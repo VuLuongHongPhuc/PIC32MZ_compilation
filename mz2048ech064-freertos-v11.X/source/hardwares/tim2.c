@@ -86,8 +86,8 @@ void TMR2_Initialize(void)
     PR2 = 1561U;    /* PR2 = ((PBCLK/prescaler) x 1ms ) - 1 */
 
     /* Interrupt priority p.116 */
-    IPC2bits.T2IP = 1;  /*!< Set timer interrupt priority */
-    IPC2bits.T2IS = 1;  /*!< Set timer interrupt sub-priority */
+    IPC2bits.T2IP = 1;  /* Set timer interrupt priority : IPL 1 */
+    IPC2bits.T2IS = 1;  /* Set timer interrupt sub-priority */
     
     /* Enable TMR2 Interrupt */
     IEC0SET |= _IEC0_T2IE_MASK;
