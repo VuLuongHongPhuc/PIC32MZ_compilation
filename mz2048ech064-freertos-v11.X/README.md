@@ -17,15 +17,22 @@ System configuration:
 - USB Clock = 48MHz
 
 LED configuration:
-- RF3 pin.38 LED1
-- RF4 pin.41 LED2
-- RF5 pin.42 LED3
+| Name | Port | Pin |
+| LED1 | RF3  | 38  |
+| LED2 | RF4  | 41  |
+| LED3 | RF5  | 42  |
 
 SPI configuration for TFT 2.2" ILI9341:
-- RD9----CS
-- RD10---RESET
-- RD11---DC
-- RD0----SDI/MOSI
-- RD1----SCK
-- RD2----LED
-- RD3----SDO/MISO
+| Name     | Port |
+| CS       | RD9  |
+| RESET    | RD10 |
+| DC       | RD11 |
+| SDI/MOSI | RD0  |
+| SCK      | RD1  |
+| LED      | RD2  |
+| SDO/MISO | RD3  |
+
+CAN1 configuration:
+| Name | Port |
+| TX   | RG8  |
+| RX   | RG7  |
