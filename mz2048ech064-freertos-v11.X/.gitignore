@@ -1,7 +1,0 @@
-
-# ignore file and folder
-build/
-.generated_files
-dist/
-debug/
-.vscode/
