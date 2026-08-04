@@ -1,11 +1,11 @@
 # PIC32MZ2048ECH064
 This MCU model is no longer supported by MCC generator. 
 
-Configuration:
+## Configuration:
 - external EC 24MHz
 - FreeRTOS v11.1.0
 
-System configuration:
+## System configuration:
 - SYSCLK = 100MHz
 - PBCLK1 = 50MHz
 - PBCLK2 = 50MHz
@@ -16,13 +16,13 @@ System configuration:
 - PBCLK8 = 50MHz
 - USB Clock = 48MHz
 
-LED configuration:
+## LED configuration:
 | Name | Port | Pin |
 | LED1 | RF3  | 38  |
 | LED2 | RF4  | 41  |
 | LED3 | RF5  | 42  |
 
-SPI configuration for TFT 2.2" ILI9341:
+## SPI configuration for TFT 2.2" ILI9341:
 | Name     | Port |
 | CS       | RD9  |
 | RESET    | RD10 |
@@ -32,7 +32,7 @@ SPI configuration for TFT 2.2" ILI9341:
 | LED      | RD2  |
 | SDO/MISO | RD3  |
 
-CAN1 configuration:
+## CAN1 configuration:
 | Name | Port |
 | TX   | RG8  |
 | RX   | RG7  |
