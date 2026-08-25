@@ -27,9 +27,10 @@ int main()
     }
 
     bool run = true;
+    int count = 0;
+
     std::thread t0([&]() 
     {
-        int count = 0;
         uint8_t buf[RX_BUFFER_SIZE];
 
         while(run)
@@ -40,19 +41,10 @@ int main()
             {
                 std::ostringstream oss;
                 oss << "[" << count++ << "] ";
-                oss << "R:";
+                oss << "R:\n";
                 for (int i = 0; i < numberOfBytesRead; i++)
                 {
-                    if (buf[i] < 0x10)
-                    {
-                        oss << " 0x0" << std::hex << (int)buf[i];
-                    }
-                    else
-                    {
-                        oss << " 0x" << std::hex << (int)buf[i];
-                    }
-
-                    //oss << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(buf[i]) << ' ';
+                    oss << static_cast<char>(buf[i]);
                 }
                 std::cout << oss.str() << '\n';
             }
@@ -78,6 +70,7 @@ int main()
                 break;
 
             case 't':
+                std::cout << '[' << count++ << ']' << "W: 0x31\n";
                 serial.Write(0x31);
                 break;
             
@@ -86,6 +79,8 @@ int main()
             }
 
         }while(!stop);
+
+        std::cout << "Thread transmit closed!\n";
     });
 
     t1.join();

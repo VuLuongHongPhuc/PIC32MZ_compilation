@@ -40,10 +40,10 @@
                 <ListView.View>
                     <GridView>
                         <!--Entete colonne-->
+                        <GridViewColumn Header="RW" DisplayMemberBinding="{Binding RW}" Width="30"/>
                         <GridViewColumn Header="No" DisplayMemberBinding="{Binding FrameCount}" Width="50"/>
                         <GridViewColumn Header="Time (µs)" DisplayMemberBinding="{Binding Time}" Width="90"/>
-                        <GridViewColumn Header="ID (Hex)" DisplayMemberBinding="{Binding Id, StringFormat={}{0:X8}}" Width="80"/>
-                    
+                        <GridViewColumn Header="ID (Hex)" DisplayMemberBinding="{Binding Id, StringFormat={}{0:X8}}" Width="80"/>                    
                         <GridViewColumn Header="D0" DisplayMemberBinding="{Binding Data[0], StringFormat={}{0:X2}}" Width="30"/>
                         <GridViewColumn Header="D1" DisplayMemberBinding="{Binding Data[1], StringFormat={}{0:X2}}" Width="30"/>
                         <GridViewColumn Header="D2" DisplayMemberBinding="{Binding Data[2], StringFormat={}{0:X2}}" Width="30"/>
@@ -54,7 +54,6 @@
                         <GridViewColumn Header="D7" DisplayMemberBinding="{Binding Data[7], StringFormat={}{0:X2}}" Width="30"/>
 
                         <GridViewColumn Header="DLC" DisplayMemberBinding="{Binding Dlc}" Width="30"/>
-                        <GridViewColumn Header="RW" DisplayMemberBinding="{Binding RW}" Width="30"/>
                     </GridView>
                 </ListView.View>
             </ListView>

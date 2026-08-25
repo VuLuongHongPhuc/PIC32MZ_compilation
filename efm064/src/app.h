@@ -84,9 +84,6 @@ typedef enum
     /* Wait for the write to complete */
     APP_STATE_WAIT_FOR_WRITE_COMPLETE,
             
-            /* APP_STATE_CAN_TASK */
-            APP_STATE_CAN_TASK,
-
     /* Application Error state*/
     APP_STATE_ERROR
             

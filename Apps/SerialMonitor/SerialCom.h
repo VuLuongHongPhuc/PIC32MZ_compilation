@@ -23,6 +23,7 @@ private:
 	void SetConfiguration();
 
 private:
+	std::string _name;
 	HANDLE _hUart;
 	bool _isOpen;
 

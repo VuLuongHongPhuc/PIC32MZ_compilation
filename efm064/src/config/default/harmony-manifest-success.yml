@@ -4,7 +4,7 @@
 
 
 project: efm064
-creation_date: 2025-06-20T18:00:59.383+02:00[Europe/Paris]    # ISO 8601 format: https://www.w3.org/TR/NOTE-datetime
+creation_date: 2026-08-25T16:39:05.615+02:00[Europe/Paris]    # ISO 8601 format: https://www.w3.org/TR/NOTE-datetime
 operating_system: Windows 10
 mcc_mode: IDE            # [IDE|Standalone|Headless]
 mcc_version: v5.5.0

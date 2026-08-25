@@ -62,23 +62,23 @@
 // *****************************************************************************
 
 
-/*** Macros for LED_2 pin ***/
-#define LED_2_Set()               (LATFSET = (1U<<4))
-#define LED_2_Clear()             (LATFCLR = (1U<<4))
-#define LED_2_Toggle()            (LATFINV= (1U<<4))
-#define LED_2_OutputEnable()      (TRISFCLR = (1U<<4))
-#define LED_2_InputEnable()       (TRISFSET = (1U<<4))
-#define LED_2_Get()               ((PORTF >> 4) & 0x1U)
-#define LED_2_PIN                  GPIO_PIN_RF4
+/*** Macros for LED_RF4 pin ***/
+#define LED_RF4_Set()               (LATFSET = (1U<<4))
+#define LED_RF4_Clear()             (LATFCLR = (1U<<4))
+#define LED_RF4_Toggle()            (LATFINV= (1U<<4))
+#define LED_RF4_OutputEnable()      (TRISFCLR = (1U<<4))
+#define LED_RF4_InputEnable()       (TRISFSET = (1U<<4))
+#define LED_RF4_Get()               ((PORTF >> 4) & 0x1U)
+#define LED_RF4_PIN                  GPIO_PIN_RF4
 
-/*** Macros for LED_3 pin ***/
-#define LED_3_Set()               (LATFSET = (1U<<5))
-#define LED_3_Clear()             (LATFCLR = (1U<<5))
-#define LED_3_Toggle()            (LATFINV= (1U<<5))
-#define LED_3_OutputEnable()      (TRISFCLR = (1U<<5))
-#define LED_3_InputEnable()       (TRISFSET = (1U<<5))
-#define LED_3_Get()               ((PORTF >> 5) & 0x1U)
-#define LED_3_PIN                  GPIO_PIN_RF5
+/*** Macros for LED_RF5 pin ***/
+#define LED_RF5_Set()               (LATFSET = (1U<<5))
+#define LED_RF5_Clear()             (LATFCLR = (1U<<5))
+#define LED_RF5_Toggle()            (LATFINV= (1U<<5))
+#define LED_RF5_OutputEnable()      (TRISFCLR = (1U<<5))
+#define LED_RF5_InputEnable()       (TRISFSET = (1U<<5))
+#define LED_RF5_Get()               ((PORTF >> 5) & 0x1U)
+#define LED_RF5_PIN                  GPIO_PIN_RF5
 
 
 // *****************************************************************************

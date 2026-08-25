@@ -8,58 +8,34 @@
  * https://developerhelp.microchip.com/xwiki/bin/view/software-tools/harmony/get-start-tm-drvr-middlware-freertos/
  *******************************************************************************/
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Included Files
-// *****************************************************************************
-// *****************************************************************************
+/********************************* Includes ***********************************/
 
+#include <stdint.h>
+#include <stdbool.h>
 #include "app.h"
 #include "sys_tasks.h"  // freeRTOS
 
-//#include "test_task.h"
-
 #include "./config/default/peripheral/can/plib_can1.h"
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Global Data Definitions
-// *****************************************************************************
-// *****************************************************************************
+/********************************* Constants definition ***********************/
 
-uint8_t CACHE_ALIGN switchPromptUSB[] = "\r\nPUSH BUTTON PRESSED";
+/********************************* Macros definition **************************/
+
+/********************************* Types definition ***************************/
+
+/********************************* Local variables ****************************/
 
 uint8_t CACHE_ALIGN cdcReadBuffer[APP_READ_BUFFER_SIZE];
 uint8_t CACHE_ALIGN cdcWriteBuffer[APP_READ_BUFFER_SIZE];
 
 static uint32_t _countIncompletRx = 0;
 
-// *****************************************************************************
-/* Application Data
+static APP_DATA appData;
 
-  Summary:
-    Holds application data
+/********************************* Implementations ****************************/
 
-  Description:
-    This structure holds the application's data.
-
-  Remarks:
-    This structure should be initialized by the APP_Initialize function.
-
-    Application strings and buffers are be defined outside this structure.
-*/
-
-APP_DATA appData;
-
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Callback Functions
-// *****************************************************************************
-// *****************************************************************************
-
-/* USER:  Add any necessary callback functions. */
-
-/* @brief USB CDC Device Events - Application Event Handler
+/**
+ * @brief USB CDC Device Events - Application Event Handler
  * @param index
  * @param event
  * @param pData
@@ -199,7 +175,7 @@ void APP_USBDeviceEventHandler
         case USB_DEVICE_EVENT_RESET:
 
             /* Update LED to show reset state */
-            LED_2_Clear();
+            LED_RF5_Clear();
 
             appData.isConfigured = false;
 
@@ -213,7 +189,7 @@ void APP_USBDeviceEventHandler
             if ( configuredEventData->configurationValue == 1)
             {
                 /* Update LED to show configured state */
-                LED_2_Set();
+                LED_RF5_Set();
                 
                 /* Register the CDC Device application event handler here.
                  * Note how the appData object pointer is passed as the
@@ -241,20 +217,20 @@ void APP_USBDeviceEventHandler
             
             appData.isConfigured = false;
             
-            LED_2_Clear();
+            /* Switch LED to show remove state */
             
             break;
 
         case USB_DEVICE_EVENT_SUSPENDED:
 
             /* Switch LED to show suspended state */
-            LED_2_Clear();
+            
             
             break;
 
         case USB_DEVICE_EVENT_RESUMED:
             /* Switch LED to show suspended state */
-            LED_2_Set();
+            
             
             break;
             
@@ -265,15 +241,8 @@ void APP_USBDeviceEventHandler
     }
 }
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Local Functions
-// *****************************************************************************
-// *****************************************************************************
 
-
-/* TODO:  Add any necessary local functions.
-*/
+/********************************* Local functions ****************************/
 
 
 /*****************************************************
@@ -305,12 +274,65 @@ bool APP_StateReset(void)
     return(retVal);
 }
 
+#if 0
+static void CallbackCan1Rx(uintptr_t contextHandle)
+{
+    (void)contextHandle;
+    
+    CAN_USB_DATA_TRANSFER canRx;
+    uint16_t timestamp;
+    CAN_MSG_RX_ATTRIBUTE msgAttr;
 
-// *****************************************************************************
-// *****************************************************************************
-// Section: Application Initialization and State Machine Functions
-// *****************************************************************************
-// *****************************************************************************
+    
+    if (APP_StateReset())
+    {
+        return;
+    }
+
+    /* USB free to transmit */
+    if(appData.isWriteComplete == true)
+    {
+        if (CAN1_MessageReceive(&canRx.id, &canRx.dlc, canRx.data, &timestamp, CAN_RX_FIFO_CHANNEL, &msgAttr))
+        {
+            appData.cdcWriteBuffer[0] = canRx.startofframe = 0x03;
+
+            appData.cdcWriteBuffer[1] = canRx.type = (uint8_t)msgAttr;
+
+            appData.cdcWriteBuffer[2] = (uint8_t)(canRx.id>>0);
+            appData.cdcWriteBuffer[3] = (uint8_t)(canRx.id>>8);
+            appData.cdcWriteBuffer[4] = (uint8_t)(canRx.id>>16);
+            appData.cdcWriteBuffer[5] = (uint8_t)(canRx.id>>24);
+
+            appData.cdcWriteBuffer[6] = canRx.dlc;
+
+            appData.cdcWriteBuffer[7] = canRx.data[0];
+            appData.cdcWriteBuffer[8] = canRx.data[1];
+            appData.cdcWriteBuffer[9] = canRx.data[2];
+            appData.cdcWriteBuffer[10] = canRx.data[3];
+            appData.cdcWriteBuffer[11] = canRx.data[4];
+            appData.cdcWriteBuffer[12] = canRx.data[5];
+            appData.cdcWriteBuffer[13] = canRx.data[6];
+            appData.cdcWriteBuffer[14] = canRx.data[7];
+
+            appData.cdcWriteBuffer[15] = canRx.endofframe = 0x15;
+
+
+            appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
+            appData.isWriteComplete = false;
+            
+            USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+                    &appData.writeTransferHandle,
+                    appData.cdcWriteBuffer,
+                    CAN_STRUCT_SIZE,                                    /* number of byte */
+                    USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+        }
+
+    }
+}
+#endif
+
+
+
 
 /*******************************************************************************
   Function:
@@ -362,7 +384,11 @@ void APP_Initialize ( void )
     appData.cdcReadBuffer = &cdcReadBuffer[0];
 
     /* Set up the read buffer */
-    appData.cdcWriteBuffer = &cdcWriteBuffer[0];  
+    appData.cdcWriteBuffer = &cdcWriteBuffer[0];
+    
+    
+    /* CAN1 */
+    //CAN1_CallbackRegister(CallbackCan1Rx, (uintptr_t) 0, CAN_RX_FIFO_CHANNEL);
 }
 
 
@@ -375,15 +401,7 @@ void APP_Initialize ( void )
  */
 
 void APP_Tasks ( void )
-{
-    static CAN_USB_DATA_TRANSFER canRx;
-    static CAN_USB_DATA_TRANSFER canTx;
-    uint16_t timestamp;
-    CAN_MSG_RX_ATTRIBUTE msgAttr;
-    
-    
-    //TEST_Task();
-
+{    
     /* Check the application's current state. */
     switch ( appData.state )
     {
@@ -391,7 +409,7 @@ void APP_Tasks ( void )
         case APP_STATE_INIT:
         {
             /* Let the time for USB to initialize */
-            vTaskDelay(50U / portTICK_PERIOD_MS);
+            vTaskDelay(20U / portTICK_PERIOD_MS);
 
             /* Open the device layer */
             appData.deviceHandle = USB_DEVICE_Open( USB_DEVICE_INDEX_0, DRV_IO_INTENT_READWRITE );
@@ -424,7 +442,7 @@ void APP_Tasks ( void )
             if(appData.isConfigured)
             {
                 /* If the device is configured then lets start reading */
-                appData.state = APP_STATE_SCHEDULE_READ;                
+                appData.state = APP_STATE_SCHEDULE_READ;
             }
             
             break;
@@ -439,16 +457,18 @@ void APP_Tasks ( void )
             /* If a read is complete, then schedule a read
              * else wait for the current read to complete */
 
-            //appData.state = APP_STATE_WAIT_FOR_READ_COMPLETE;
-            appData.state = APP_STATE_CAN_TASK;
+            appData.state = APP_STATE_WAIT_FOR_READ_COMPLETE;
+            
             
             if(appData.isReadComplete == true)
             {
                 appData.isReadComplete = false;
                 appData.readTransferHandle =  USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
 
+                /* Load or reload USB queue for next receive */
                 USB_DEVICE_CDC_Read (USB_DEVICE_CDC_INDEX_0,
-                        &appData.readTransferHandle, appData.cdcReadBuffer,
+                        &appData.readTransferHandle,
+                        appData.cdcReadBuffer,
                         APP_READ_BUFFER_SIZE);
                 
                 if(appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID)
@@ -460,22 +480,22 @@ void APP_Tasks ( void )
 
             break;
 
-
-        case APP_STATE_CAN_TASK:
-        {
-            if(APP_StateReset())
+        case APP_STATE_WAIT_FOR_READ_COMPLETE:
+            
+            if (APP_StateReset())
             {
                 break;
             }
             
-            
             if(appData.isReadComplete == true)
             {
-                appData.isReadComplete = false;
+                appData.state = APP_STATE_SCHEDULE_READ;
                 
                 /* format bytes to can frame */
                 if (appData.numBytesRead == CAN_STRUCT_SIZE)
                 {
+                    CAN_USB_DATA_TRANSFER canTx;
+                    
                     canTx.startofframe = appData.cdcReadBuffer[0];
                     canTx.type         = appData.cdcReadBuffer[1];
                     
@@ -503,42 +523,30 @@ void APP_Tasks ( void )
                 {
                     _countIncompletRx++;
                     
-                    //TODO: change with stream buffer
-                }
-                
-                
-                /* Reload USB queue for next receive */
-                appData.readTransferHandle =  USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
-
-                USB_DEVICE_CDC_Read (USB_DEVICE_CDC_INDEX_0,
-                        &appData.readTransferHandle,
-                        appData.cdcReadBuffer,
-                        APP_READ_BUFFER_SIZE);
-                
-                if(appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID)
-                {
-                    appData.state = APP_STATE_ERROR;
-                    break;
+                    //TODO: if here -> change with stream buffer
                 }
             }
             
+            CAN_USB_DATA_TRANSFER canRx;
+            uint16_t timestamp;
+            CAN_MSG_RX_ATTRIBUTE msgAttr;
+    
             /* USB free to transmit */
             if(appData.isWriteComplete == true)
             {
                 if (CAN1_MessageReceive(&canRx.id, &canRx.dlc, canRx.data, &timestamp, CAN_RX_FIFO_CHANNEL, &msgAttr))
                 {
                     appData.cdcWriteBuffer[0] = canRx.startofframe = 0x03;
-                    
-                    
-                    appData.cdcWriteBuffer[1] = canRx.type = (msgAttr==CAN_MSG_RX_DATA_FRAME) ? 1 : 2;
-                    
+
+                    appData.cdcWriteBuffer[1] = canRx.type = (uint8_t)msgAttr;
+
                     appData.cdcWriteBuffer[2] = (uint8_t)(canRx.id>>0);
                     appData.cdcWriteBuffer[3] = (uint8_t)(canRx.id>>8);
                     appData.cdcWriteBuffer[4] = (uint8_t)(canRx.id>>16);
                     appData.cdcWriteBuffer[5] = (uint8_t)(canRx.id>>24);
-                    
+
                     appData.cdcWriteBuffer[6] = canRx.dlc;
-                    
+
                     appData.cdcWriteBuffer[7] = canRx.data[0];
                     appData.cdcWriteBuffer[8] = canRx.data[1];
                     appData.cdcWriteBuffer[9] = canRx.data[2];
@@ -547,23 +555,23 @@ void APP_Tasks ( void )
                     appData.cdcWriteBuffer[12] = canRx.data[5];
                     appData.cdcWriteBuffer[13] = canRx.data[6];
                     appData.cdcWriteBuffer[14] = canRx.data[7];
-                    
+
                     appData.cdcWriteBuffer[15] = canRx.endofframe = 0x15;
-                    
-                    
-                    
-                    
+
+
                     appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
                     appData.isWriteComplete = false;
+
                     USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                             &appData.writeTransferHandle,
                             appData.cdcWriteBuffer,
                             CAN_STRUCT_SIZE,                                    /* number of byte */
                             USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
                 }
-            }
-        }break;
 
+            }
+            break;
+            
         case APP_STATE_ERROR:
 
         /* The default state should never be executed. */

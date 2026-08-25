@@ -10,11 +10,19 @@ namespace Serial.Models
 {
     public class CanFrameModel
     {
+        public const int DEF_MAX_DATA_SIZE = 64; // FDCAN max size
+
         public enum CAN_FRAME_DEF_enum : int
         {
             DEF_FRAME_SIZE = 16,
             DEF_FRAME_SYNC_START = 0x03,
             DEF_FRAME_SYNC_END = 0x15
+        }
+
+        public enum CAN_MSG_RX_ATTRIBUTE
+        {
+            CAN_MSG_RX_DATA_FRAME = 0,
+            CAN_MSG_RX_REMOTE_FRAME
         }
 
 
@@ -42,7 +50,7 @@ namespace Serial.Models
         {
             _frameCount = _count++;
             _id = 0;
-            _data = new byte[32];
+            _data = new byte[DEF_MAX_DATA_SIZE];
             _dlc = 0;
             _rw = "R";
         }
@@ -54,12 +62,15 @@ namespace Serial.Models
 
         public bool FormatRaw(byte[] rawData)
         {
-            if (rawData.Length < (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE)
+            // error frame size
+            if (rawData.Length != (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE)
                 return false;
 
+            // error header
             if (rawData[0] != 0x03)
                 return false;
 
+            // error footer
             if (rawData[15] != 0x15)
                 return false;
 
@@ -92,7 +103,7 @@ namespace Serial.Models
 
             values[0] = (byte)CAN_FRAME_DEF_enum.DEF_FRAME_SYNC_START;  // SOF
 
-            values[1] = 0;  // frame type
+            values[1] = (byte)CAN_MSG_RX_ATTRIBUTE.CAN_MSG_RX_DATA_FRAME;  // frame type
 
             values[2] = (byte)Id;          // id
             values[3] = (byte)(Id >> 8);   // id

@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows;
@@ -24,8 +25,9 @@ namespace Serial
     public partial class MainWindow : Window
     {
         //static Mutex mutex = new Mutex();        
-        static readonly object lockVListObj = new object();// Shared object for locking
+        static readonly object _lockViewList = new object();// Shared object for locking
 
+        static readonly object _lockSerial = new object();
         System.IO.Ports.SerialPort _serial= new System.IO.Ports.SerialPort();
 
         Stopwatch _stopwatch = new Stopwatch();
@@ -39,9 +41,49 @@ namespace Serial
 
             lvFrameCan.ItemsSource = _CollectionCAN;
 
-            _serial.DataReceived += new SerialDataReceivedEventHandler(_serial_DataReceived);
-
             UpdateListCOM();
+
+            _serial.DataReceived += (s, e) => {
+
+                lock (_lockSerial)
+                { 
+                    System.IO.Ports.SerialPort sp = (System.IO.Ports.SerialPort)s;
+
+                    if (sp == null)
+                    {
+                        Debug.WriteLine("[ERROR] Serial handler null");
+                        return;
+                    }
+
+                    int numberOfBytesRead = 0;
+                    do 
+                    { 
+                        numberOfBytesRead = sp.BytesToRead;
+
+                        if (numberOfBytesRead >= (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE)
+                        {
+                            numberOfBytesRead -= (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE;
+
+                            byte[] buf = new byte[(int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE];
+
+                            int nLu = sp.Read(buf, 0, (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE);
+                            if (nLu == (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE)
+                            {
+                                CanFrameModel frame = new CanFrameModel();
+
+                                frame.FormatRaw(buf);
+
+                                double now = _stopwatch.Elapsed.TotalMicroseconds;
+                                frame.Time = (UInt64)(now - _lasttime);
+                                _lasttime = now;
+
+                                AddNewCanMessage(frame);
+                            }
+                        }
+                    } while (numberOfBytesRead >= (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE);
+                }
+            };
+
         }
 
         void UpdateListCOM()
@@ -81,20 +123,19 @@ namespace Serial
             _serial.StopBits = StopBits.One;
             _serial.Handshake = Handshake.None;
             //_serial.RtsEnable = false;
-            _serial.WriteTimeout = 500; // in milliseconde
-            _serial.ReadTimeout = 500;
+            _serial.WriteTimeout = 100; // in milliseconde
+            _serial.ReadTimeout = 100;
 
             try
             {
                 _serial.Open();
+                _serial.DiscardInBuffer();
                 Debug.WriteLine("Serial Open.");
-
 
                 //enable/disable connection button
                 btnDisconnect.IsEnabled = true;
                 btnConnect.IsEnabled = false;
-                btnUpdate.IsEnabled = false;
-                
+                btnUpdate.IsEnabled = false;                
 
                 //start watching the timeout
                 _stopwatch.Start();
@@ -118,51 +159,6 @@ namespace Serial
             Debug.WriteLine("Serial Close.");
         }
 
-        private void _serial_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
-        {
-            //throw new NotImplementedException();
-
-            System.IO.Ports.SerialPort sp = (System.IO.Ports.SerialPort)sender;
-
-            if (sp == null)
-            {
-                Debug.WriteLine("Serial handler null");
-                return;
-            }
-
-            int numBytes = 0;
-
-            do 
-            {
-                numBytes = sp.BytesToRead;
-                if (numBytes >= (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE)
-                {
-                    // filter complet frame
-                    if (numBytes % (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE != 0)
-                        return;
-
-
-                    byte[] buf = new byte[numBytes];
-
-                    int nLu = sp.Read(buf, 0, (int)CanFrameModel.CAN_FRAME_DEF_enum.DEF_FRAME_SIZE);
-
-                    if (nLu == (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE)
-                    { 
-                        CanFrameModel frame = new CanFrameModel();
-
-                        frame.FormatRaw(buf);
-
-                        double now = _stopwatch.Elapsed.TotalMicroseconds;
-                        frame.Time = (UInt64)(now - _lasttime);
-                        _lasttime = now;
-
-                        AddNewCanMessage(frame);
-                    }
-                }
-            }while (numBytes >= (int)CAN_FRAME_DEF_enum.DEF_FRAME_SIZE);
-
-        }
-
         public delegate void AddNewCanMessageAppend(CanFrameModel frame);
         public void AddNewCanMessage(CanFrameModel frame)
         {
@@ -175,12 +171,12 @@ namespace Serial
             //TODO: your code
 
             // Lock viewlist for update
-            lock (lockVListObj)
+            lock (_lockViewList)
             {
                 _CollectionCAN.Add(frame);
 
-                // limit 500 items in the collection
-                if (_CollectionCAN.Count > 500)
+                // limit items in the collection
+                if (_CollectionCAN.Count > 100)
                 {
                     _CollectionCAN.RemoveAt(0);
                 }
@@ -208,11 +204,11 @@ namespace Serial
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
             // Try to acquire the lock with a 2-second timeout
-            if (Monitor.TryEnter(lockVListObj, TimeSpan.FromSeconds(2)))
+            if (Monitor.TryEnter(_lockViewList, TimeSpan.FromSeconds(2)))
             {
                 _CollectionCAN.Clear();
 
-                Monitor.Exit(lockVListObj);
+                Monitor.Exit(_lockViewList);
             }
             else
             {
