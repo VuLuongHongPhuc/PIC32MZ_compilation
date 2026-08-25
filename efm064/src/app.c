@@ -274,65 +274,6 @@ bool APP_StateReset(void)
     return(retVal);
 }
 
-#if 0
-static void CallbackCan1Rx(uintptr_t contextHandle)
-{
-    (void)contextHandle;
-    
-    CAN_USB_DATA_TRANSFER canRx;
-    uint16_t timestamp;
-    CAN_MSG_RX_ATTRIBUTE msgAttr;
-
-    
-    if (APP_StateReset())
-    {
-        return;
-    }
-
-    /* USB free to transmit */
-    if(appData.isWriteComplete == true)
-    {
-        if (CAN1_MessageReceive(&canRx.id, &canRx.dlc, canRx.data, &timestamp, CAN_RX_FIFO_CHANNEL, &msgAttr))
-        {
-            appData.cdcWriteBuffer[0] = canRx.startofframe = 0x03;
-
-            appData.cdcWriteBuffer[1] = canRx.type = (uint8_t)msgAttr;
-
-            appData.cdcWriteBuffer[2] = (uint8_t)(canRx.id>>0);
-            appData.cdcWriteBuffer[3] = (uint8_t)(canRx.id>>8);
-            appData.cdcWriteBuffer[4] = (uint8_t)(canRx.id>>16);
-            appData.cdcWriteBuffer[5] = (uint8_t)(canRx.id>>24);
-
-            appData.cdcWriteBuffer[6] = canRx.dlc;
-
-            appData.cdcWriteBuffer[7] = canRx.data[0];
-            appData.cdcWriteBuffer[8] = canRx.data[1];
-            appData.cdcWriteBuffer[9] = canRx.data[2];
-            appData.cdcWriteBuffer[10] = canRx.data[3];
-            appData.cdcWriteBuffer[11] = canRx.data[4];
-            appData.cdcWriteBuffer[12] = canRx.data[5];
-            appData.cdcWriteBuffer[13] = canRx.data[6];
-            appData.cdcWriteBuffer[14] = canRx.data[7];
-
-            appData.cdcWriteBuffer[15] = canRx.endofframe = 0x15;
-
-
-            appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
-            appData.isWriteComplete = false;
-            
-            USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                    &appData.writeTransferHandle,
-                    appData.cdcWriteBuffer,
-                    CAN_STRUCT_SIZE,                                    /* number of byte */
-                    USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-        }
-
-    }
-}
-#endif
-
-
-
 
 /*******************************************************************************
   Function:
@@ -386,9 +327,6 @@ void APP_Initialize ( void )
     /* Set up the read buffer */
     appData.cdcWriteBuffer = &cdcWriteBuffer[0];
     
-    
-    /* CAN1 */
-    //CAN1_CallbackRegister(CallbackCan1Rx, (uintptr_t) 0, CAN_RX_FIFO_CHANNEL);
 }
 
 
